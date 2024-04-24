@@ -9,7 +9,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth/>}></Route>
-          <Route path="/editor" element={<Editor/>}></Route>
+          <Route path="/editor/:roomID" element={<Editor/>}></Route>
         </Routes>
       </BrowserRouter>
     </>
