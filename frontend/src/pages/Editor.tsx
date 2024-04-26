@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import { Clients } from "../components/Clients";
 import logo from '../assets/code-cast-high-resolution-logo-transparent.png';
 import { useState } from "react";
+import {CodeEditor} from "../components/CodeEditor";
 
 type Client = {
   SocketId: number;
@@ -18,11 +19,10 @@ const Editor = () => {
   ]);
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
-  console.log(username);
   return (
-    <>
+    <div className="">
      <div>
-     <div className=" bg-black p-4 flex justify-between items-center">
+     <div className="bg-black p-4 flex justify-between items-center">
         {/* Logo */}
         <img src={logo} alt="Logo" className="h-8" />
         <button
@@ -36,7 +36,7 @@ const Editor = () => {
      </div>
 
 
-    <div className="h-screen bg-black grid grid-cols-6">
+    <div className=" bg-black grid grid-cols-6">
 
       {/* Sidebar (visible on larger screens) */}
       <div className={`sidebar hidden md:block bg-[#121c25] py-6 px-4 gap-5 max-h-full sticky`}>
@@ -63,9 +63,11 @@ const Editor = () => {
       </div>
 
       {/* Editor */}
-      <div className="editor col-span-6 md:col-span-5 bg-gray-700"></div>
+      <div className="col-span-6 md:col-span-5">
+        <CodeEditor/>
+      </div>
     </div>
-    </>
+    </div>
   );
 };
 
