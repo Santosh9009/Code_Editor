@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Clients } from "../components/Clients";
 import logo from '../assets/code-cast-high-resolution-logo-transparent.png';
 import { useEffect, useRef, useState } from "react";
@@ -15,25 +15,37 @@ type Client = {
 const Editor = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [searchParams] = useSearchParams();
-  const username = searchParams.get('username');
+  const userName = searchParams.get('username');
   const roomID = searchParams.get('roomID');
   const socketRef = useRef<null | Socket>(null);
-  const [clients, setClients] = useState<Client[]>([
-    { SocketId: 1, username: "Raman" },
-    { SocketId: 2, username: "Dinesh" },
-    { SocketId: 3, username: "Santosh" },
-  ]);
+  const reactnavigate = useNavigate();
+  const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(()=>{
     const init = async()=>{
       socketRef.current = await initSocket();
+      socketRef.current.on('connect_error',(e)=> handleError(e));
+      socketRef.current.on('connect_failed',(e)=> handleError(e));
+
       socketRef.current.emit(ACTIONS.JOIN,{
         roomID,
-        username,
+        username:userName,
       })
+
+      
     }
     init();
   },[])
+
+  function handleError(e:Event){
+    console.log('socket error',e)
+    alert('Socket connnection failed!');
+    reactnavigate('/auth')
+  }
+
+  if(!userName || !roomID){
+    <Navigate to={'/auth'}/>
+  }
 
 
   return (
