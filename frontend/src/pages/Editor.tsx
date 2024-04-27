@@ -32,7 +32,13 @@ const Editor = () => {
         username:userName,
       })
 
-      
+      socketRef.current.on(ACTIONS.JOINED,({clients, username,SocketId})=>{
+        if(username!==userName){
+          alert(`${username} entered the room`)
+          console.log(username);
+        }
+        setClients([...clients])
+      })
     }
     init();
   },[])
