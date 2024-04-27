@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  console.log("a user connected",socket.id);
 
   socket.on("message", (msg) => {
     io.emit("message" , msg);
@@ -21,6 +21,8 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(5000, () => {
+const port = process.env.PORT || 5000;
+
+server.listen(port, () => {
   console.log("server is listening on port 5000");
 });

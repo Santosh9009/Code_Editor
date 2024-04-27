@@ -1,20 +1,17 @@
 import { FormEvent, useState } from "react";
 import logo from "../assets/code-cast-high-resolution-logo-transparent.png";
 import { v4 as uuid } from 'uuid';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 export const Auth = () => {
   const [roomID, setRoomID] = useState("");
   const [username, setUsername] = useState("");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const queryParams = new URLSearchParams({
-      username: username,
-      roomID: roomID
-  }); const queryString = queryParams.toString();
-    navigate(`/editor/${queryString}`)
+    navigate(`/editor?username=${encodeURIComponent(username)}&roomID=${encodeURIComponent(roomID)}`);
   };
   return (
     <div className="h-screen bg-[#15202B] flex justify-center items-center">

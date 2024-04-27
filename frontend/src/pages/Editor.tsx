@@ -1,8 +1,11 @@
 import { useSearchParams } from "react-router-dom";
 import { Clients } from "../components/Clients";
 import logo from '../assets/code-cast-high-resolution-logo-transparent.png';
-import { useState } from "react";
-import {CodeEditor} from "../components/CodeEditor";
+import { useEffect, useRef, useState } from "react";
+import { CodeEditor } from "../components/CodeEditor";
+import { initSocket } from "../utils/socket";
+import { Socket } from "socket.io-client";
+import { ACTIONS } from "../utils/action";
 
 type Client = {
   SocketId: number;
@@ -10,17 +13,31 @@ type Client = {
 };
 
 const Editor = () => {
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [searchParams] = useSearchParams();
   const username = searchParams.get('username');
+  const roomID = searchParams.get('roomID');
+  const socketRef = useRef<null | Socket>(null);
   const [clients, setClients] = useState<Client[]>([
     { SocketId: 1, username: "Raman" },
     { SocketId: 2, username: "Dinesh" },
     { SocketId: 3, username: "Santosh" },
   ]);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
+
+  useEffect(()=>{
+    const init = async()=>{
+      socketRef.current = await initSocket();
+      socketRef.current.emit(ACTIONS.JOIN,{
+        roomID,
+        username,
+      })
+    }
+    init();
+  },[])
+
 
   return (
-    <div className="">
+    <div className="h-screen">
      <div>
      <div className="bg-black p-4 flex justify-between items-center">
         {/* Logo */}
