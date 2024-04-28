@@ -8,7 +8,7 @@ import { Socket } from "socket.io-client";
 import { ACTIONS } from "../utils/action";
 
 type Client = {
-  SocketId: number;
+  socketId: number;
   username: string;
 };
 
@@ -16,7 +16,7 @@ const Editor = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [searchParams] = useSearchParams();
   const userName = searchParams.get('username');
-  const roomID = searchParams.get('roomID');
+  const roomId = searchParams.get('roomId');
   const socketRef = useRef<null | Socket>(null);
   const reactnavigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
@@ -27,20 +27,38 @@ const Editor = () => {
       socketRef.current.on('connect_error',(e)=> handleError(e));
       socketRef.current.on('connect_failed',(e)=> handleError(e));
 
+  // Listing to join
       socketRef.current.emit(ACTIONS.JOIN,{
-        roomID,
+        roomId,
         username:userName,
       })
 
-      socketRef.current.on(ACTIONS.JOINED,({clients, username,SocketId})=>{
+
+// listening to Joined
+      socketRef.current.on(ACTIONS.JOINED,({clients, username,socketId})=>{
+        console.log(clients)
         if(username!==userName){
           alert(`${username} entered the room`)
-          console.log(username);
         }
-        setClients([...clients])
+        setClients(clients)
+      })
+// Listening to disconnected
+      socketRef.current.on(ACTIONS.DISCONNECTED,({username, socketId})=>{
+        console.log(username, socketId)
+        
+        setClients((prev)=>{
+          return prev.filter(client=>client.socketId!==socketId)
+        })
+        alert(`${username} left the room`)
       })
     }
     init();
+
+    return ()=>{
+      socketRef.current?.disconnect();
+      socketRef.current?.off(ACTIONS.JOINED);
+      socketRef.current?.off(ACTIONS.DISCONNECTED);
+    }
   },[])
 
   function handleError(e:Event){
@@ -49,7 +67,7 @@ const Editor = () => {
     reactnavigate('/auth')
   }
 
-  if(!userName || !roomID){
+  if(!userName || !roomId){
     <Navigate to={'/auth'}/>
   }
 
@@ -80,7 +98,7 @@ const Editor = () => {
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
         </div>
         <div className="flex flex-col gap-5">
-        <button className="text-white bg-[#1F75FE] rounded py-2 font-medium hover:bg-[#034694] duration-300">Copy RoomId</button>
+        <button className="text-white bg-[#1F75FE] rounded py-2 font-medium hover:bg-[#034694] duration-300">Copy roomId</button>
           <button className="text-white bg-[#1F75FE] rounded py-2 font-medium hover:bg-[#034694] duration-300">Leave</button>
         </div>
         </div>
@@ -92,7 +110,7 @@ const Editor = () => {
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
         </div>
           <div className="flex flex-col gap-3">
-          <button className="text-white bg-[#1F75FE] rounded py-2 px-2 font-medium hover:bg-[#034694] duration-300">Copy RoomId</button>
+          <button className="text-white bg-[#1F75FE] rounded py-2 px-2 font-medium hover:bg-[#034694] duration-300">Copy roomId</button>
           <button className="text-white bg-[#1F75FE] rounded py-2 font-medium hover:bg-[#034694] duration-300">Leave</button>
           </div>
       </div>

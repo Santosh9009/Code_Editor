@@ -4,14 +4,14 @@ import { v4 as uuid } from 'uuid';
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export const Auth = () => {
-  const [roomID, setRoomID] = useState("");
+  const [roomId, setroomId] = useState("");
   const [username, setUsername] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    navigate(`/editor?username=${encodeURIComponent(username)}&roomID=${encodeURIComponent(roomID)}`);
+    navigate(`/editor?username=${encodeURIComponent(username)}&roomId=${encodeURIComponent(roomId)}`);
   };
   return (
     <div className="h-screen bg-[#15202B] flex justify-center items-center">
@@ -23,14 +23,14 @@ export const Auth = () => {
         <h2 className="text-xl font-medium mb-4">Enter Room ID and Username</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="roomid" className="block mb-1">
-              Room ID:
+            <label htmlFor="roomId" className="block mb-1">
+              Room Id:
             </label>
             <input
               type="text"
-              id="roomid"
-              value={roomID}
-              onChange={(e) => setRoomID(e.target.value)}
+              id="roomId"
+              value={roomId}
+              onChange={(e) => setroomId(e.target.value)}
               className="w-full rounded px-3 py-[.4rem] text-black outline-none"
               required
             />
@@ -59,7 +59,7 @@ export const Auth = () => {
           <div>
             Don't have an invite? create a{" "}
             <span>
-              <button onClick={()=>setRoomID(uuid())} className="text-blue-500 underline">newroom </button>
+              <button onClick={()=>setroomId(uuid())} className="text-blue-500 underline">newroom </button>
             </span>
           </div>
         </form>

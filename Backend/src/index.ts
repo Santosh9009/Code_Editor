@@ -14,19 +14,21 @@ type usermap = {
 }
 const userSocketMap: usermap = {};
 
-function getRoomClients(roomid:string){
-  return Array.from(io.sockets.adapter.rooms.get(roomid) || []).map((socketId)=>{
+function getRoomClients(roomId:string){
+  return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map((socketId)=>{
     return {socketId,username:userSocketMap[socketId]}
   })
 }
 
+
 io.on("connection", (socket) => {
 
-  socket.on(ACTIONS.JOIN, ({ username, roomID }: { username: string, roomID: string }) => {
+  // join
+  socket.on(ACTIONS.JOIN, ({ username, roomId }: { username: string, roomId: string }) => {
     console.log(username)
     userSocketMap[socket.id] = username;
-    socket.join(roomID);
-    const clients = getRoomClients(roomID);
+    socket.join(roomId);
+    const clients = getRoomClients(roomId);
     clients.forEach(({socketId})=>{
       io.to(socketId).emit(ACTIONS.JOINED,{
         clients,  
@@ -34,9 +36,31 @@ io.on("connection", (socket) => {
         socketId:socket.id
       })
     })
+    console.log(userSocketMap)
   });
-   
+
+// disconnet
+  socket.on('disconnecting',()=>{
+  
+    
+    socket.rooms.forEach((roomId)=>{
+      socket.to(roomId).emit(ACTIONS.DISCONNECTED,{
+        socketId:socket.id,
+        username:userSocketMap[socket.id]
+      })
+      socket.leave(roomId);
+    })
+    delete userSocketMap[socket.id]
+    console.log(userSocketMap);
+  })
+
+  socket.on('disconnect',()=>{
+    console.log(socket.id)
+  })
+  
+
 });
+
 
 const port = process.env.PORT || 5000;
 
