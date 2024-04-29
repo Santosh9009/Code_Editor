@@ -15,8 +15,8 @@ type Client = {
 const Editor = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [searchParams] = useSearchParams();
-  const userName = searchParams.get('username');
-  const roomId = searchParams.get('roomId');
+  const userName:string = searchParams.get('username') || "";
+  const roomId:string = searchParams.get('roomId') || '';
   const socketRef = useRef<null | Socket>(null);
   const reactnavigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
@@ -117,7 +117,7 @@ const Editor = () => {
 
       {/* Editor */}
       <div className="col-span-6 md:col-span-5">
-        <CodeEditor/>
+        <CodeEditor socketRef={socketRef} roomId={roomId}/>
       </div>
     </div>
     </div>

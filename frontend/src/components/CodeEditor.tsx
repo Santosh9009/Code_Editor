@@ -1,49 +1,76 @@
-import {Editor, OnMount } from '@monaco-editor/react';
-import { useEffect, useRef, useState } from 'react';
-import { editor } from "monaco-editor/esm/vs/editor/editor.api";
+import React, { useEffect, useRef } from 'react';
+import { Editor, OnMount } from '@monaco-editor/react';
+import { editor } from 'monaco-editor/esm/vs/editor/editor.api';
+import { ACTIONS } from '../utils/action';
+import { Socket } from 'socket.io-client';
 
-export const CodeEditor = () => {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const [ code ,setCode ] = useState('//Start writting here...');
-
-  const onMount:OnMount = (editor)=>{
-    editorRef.current = editor;
-    editorRef.current?.focus();
-  }
-
-  useEffect(()=>{
-    
-  })
-
-  function showValue() {
-    alert(editorRef.current?.getValue());
-  }
-
-
-  return (
-    <>
-    <button className='text-white bg-red-700 px-2 py-2 rounded focus:bg-red-500' onClick={showValue}>Show value</button>
-    <Editor language="javascript" theme='vs-dark' defaultValue={code} value={code} onMount={onMount} onChange={(value)=>setCode(value||"")} options={{
-      wordWrap:'on',
-      padding: {
-        top: 20,
-        bottom: 20,
-      },
-      fontFamily: 'Fira Code',
-      fontSize: 14,
-      lineHeight: 24,
-      scrollbar: {
-        useShadows: true,
-        verticalHasArrows: true,
-        horizontalScrollbarSize: 8,
-        verticalSliderSize: 8,
-        horizontalSliderSize: 8,
-      },
-    }} />
-        </>
-
-  )
+interface CodeEditorProps {
+  socketRef: React.MutableRefObject<null | Socket>;
+  roomId: string;
 }
 
+export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId }) => {
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
+  const onMount: OnMount = (editor) => {
+    editorRef.current = editor;
+    editorRef.current?.focus();
+  };
 
+  useEffect(() => {
+    const init = async () => {
+      // Provide initial code value or handle null case
+      const initialCode = '// Start writing here...';
+      editorRef.current?.setValue(initialCode);
+
+      // Emit code change when editor content changes
+      editorRef.current?.onDidChangeModelContent(() => {
+        const code = editorRef.current?.getValue();
+        console.log(code)
+        socketRef.current?.emit(ACTIONS.CODE_CHANGE, {
+          roomId,
+          code,
+        });
+      });
+
+      // Listen for incoming code changes from the server
+      socketRef.current?.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+        if (code !== null && code !== undefined) {
+          editorRef.current?.setValue(code);
+        }
+      });
+    };
+
+    init();
+
+    // Cleanup listeners when component unmounts
+    return () => {
+      socketRef.current?.off(ACTIONS.CODE_CHANGE);
+    };
+  }, []);
+
+  return (
+    <Editor
+      language="javascript"
+      theme="vs-dark"
+      onMount={onMount}
+      options={{
+        wordWrap: 'on',
+        padding: {
+          top: 20,
+          bottom: 20,
+        },
+        fontFamily: 'Fira Code',
+        fontSize: 14,
+        lineHeight: 24,
+        scrollbar: {
+          useShadows: true,
+          verticalHasArrows: true,
+          horizontalScrollbarSize: 8,
+          verticalSliderSize: 8,
+          horizontalSliderSize: 8,
+        },
+      }}
+    />
+  );
+};
