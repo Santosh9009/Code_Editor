@@ -43,6 +43,14 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId }) => 
     });
   };
 
+  useEffect(() => {
+    const cleanup = () => {
+      // Cleanup function to unsubscribe from socket events
+      socketRef.current?.off(ACTIONS.CODE_CHANGE);
+    };
+    return cleanup;
+  }, [socketRef]);
+
   return (
     <Editor
       language="javascript"
