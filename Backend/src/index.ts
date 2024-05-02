@@ -44,6 +44,12 @@ io.on("connection", (socket) => {
     console.log(code)
     socket.broadcast.to(roomId).emit(ACTIONS.CODE_CHANGE,{code})
   })
+  
+
+  // code_sync
+  socket.on(ACTIONS.SYNC_CODE,({code,socketId}:{code:string,socketId:string})=>{
+    io.to(socketId).emit(ACTIONS.CODE_CHANGE,{code})
+  })
 
 // disconnet
   socket.on('disconnecting',()=>{

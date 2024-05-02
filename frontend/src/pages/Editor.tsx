@@ -20,7 +20,7 @@ const Editor = () => {
   const socketRef = useRef<null | Socket>(null);
   const reactnavigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
- 
+  const codeRef = useRef<string | null>(null);
 
   useEffect(()=>{
     const init = async()=>{
@@ -36,12 +36,13 @@ const Editor = () => {
 
 
 // listening to Joined
-      socketRef.current.on(ACTIONS.JOINED,({clients, username,socketId})=>{
+      socketRef.current.on(ACTIONS.JOINED,({clients,username,socketId})=>{
         console.log(clients)
         if(username!==userName){
           alert(`${username} entered the room`)
         }
         setClients(clients)
+        socketRef.current?.emit(ACTIONS.SYNC_CODE, {code:codeRef.current, socketId})
       })
 // Listening to disconnected
       socketRef.current?.on(ACTIONS.DISCONNECTED,({username, socketId})=>{
@@ -133,7 +134,7 @@ const Editor = () => {
 
       {/* Editor */}
       <div className="col-span-6 md:col-span-5">
-        <CodeEditor socketRef={socketRef} roomId={roomId} />
+        <CodeEditor socketRef={socketRef} roomId={roomId} codesync={(code)=>codeRef.current=code}/>
       </div>
     </div>
     </div>
