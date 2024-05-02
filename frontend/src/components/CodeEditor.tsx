@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Editor, OnMount } from '@monaco-editor/react';
+import React, { useEffect, useRef, useState } from 'react';
+import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor/esm/vs/editor/editor.api';
 import { ACTIONS } from '../utils/action';
 import { Socket } from 'socket.io-client';
@@ -11,43 +11,37 @@ interface CodeEditorProps {
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId }) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const userTypingRef = useRef<boolean>(true);
 
-  const onMount: OnMount = (editor) => {
-    editorRef.current = editor;
-    editorRef.current?.focus();
+  const onMount: OnMount = (editorInstance) => {
+    editorRef.current = editorInstance;
+    // editorRef.current?.focus();
+
+    // Provide initial code value or handle null case
+    const initialCode = '// Start writing here...';
+    editorRef.current?.setValue(initialCode);
+
+    // Emit code change when editor content changes
+    editorRef.current?.onDidChangeModelContent(() => {
+      if(userTypingRef.current){
+      const code = editorRef.current?.getValue();
+      console.log(code);
+      socketRef.current?.emit(ACTIONS.CODE_CHANGE, {
+        roomId,
+        code,
+      });
+    }
+    });
+
+    // Listen for incoming code changes from the server
+    socketRef.current?.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+      if (code !== null && code !== undefined) {
+        userTypingRef.current=false;
+        editorRef.current?.setValue(code);
+        userTypingRef.current=true;
+      }
+    });
   };
-
-  useEffect(() => {
-    const init = async () => {
-      // Provide initial code value or handle null case
-      const initialCode = '// Start writing here...';
-      editorRef.current?.setValue(initialCode);
-
-      // Emit code change when editor content changes
-      editorRef.current?.onDidChangeModelContent(() => {
-        const code = editorRef.current?.getValue();
-        console.log(code)
-        socketRef.current?.emit(ACTIONS.CODE_CHANGE, {
-          roomId,
-          code,
-        });
-      });
-
-      // Listen for incoming code changes from the server
-      socketRef.current?.on(ACTIONS.CODE_CHANGE, ({ code }) => {
-        if (code !== null && code !== undefined) {
-          editorRef.current?.setValue(code);
-        }
-      });
-    };
-
-    init();
-
-    // Cleanup listeners when component unmounts
-    return () => {
-      socketRef.current?.off(ACTIONS.CODE_CHANGE);
-    };
-  }, []);
 
   return (
     <Editor

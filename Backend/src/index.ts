@@ -42,7 +42,7 @@ io.on("connection", (socket) => {
 // code_change
   socket.on(ACTIONS.CODE_CHANGE,({roomId,code}:{roomId:string,code:string})=>{
     console.log(code)
-    io.to(roomId).emit(ACTIONS.CODE_CHANGE,{code})
+    socket.broadcast.to(roomId).emit(ACTIONS.CODE_CHANGE,{code})
   })
 
 // disconnet
