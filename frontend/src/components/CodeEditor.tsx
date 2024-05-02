@@ -7,9 +7,10 @@ import { Socket } from 'socket.io-client';
 interface CodeEditorProps {
   socketRef: React.MutableRefObject<null | Socket>;
   roomId: string;
+  codesync:(code:string)=>void;
 }
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId }) => {
+export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , codesync}) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const userTypingRef = useRef<boolean>(true);
 
@@ -25,7 +26,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId }) => 
     editorRef.current?.onDidChangeModelContent(() => {
       if(userTypingRef.current){
       const code = editorRef.current?.getValue();
-      console.log(code);
+      codesync(code || '');
       socketRef.current?.emit(ACTIONS.CODE_CHANGE, {
         roomId,
         code,

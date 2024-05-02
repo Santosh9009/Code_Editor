@@ -20,6 +20,7 @@ const Editor = () => {
   const socketRef = useRef<null | Socket>(null);
   const reactnavigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
+ 
 
   useEffect(()=>{
     const init = async()=>{
@@ -43,7 +44,7 @@ const Editor = () => {
         setClients(clients)
       })
 // Listening to disconnected
-      socketRef.current.on(ACTIONS.DISCONNECTED,({username, socketId})=>{
+      socketRef.current?.on(ACTIONS.DISCONNECTED,({username, socketId})=>{
         console.log(username, socketId)
         
         setClients((prev)=>{
@@ -65,6 +66,21 @@ const Editor = () => {
     console.log('socket error',e)
     alert('Socket connnection failed!');
     reactnavigate('/auth')
+  }
+
+  function copyRoomId(){
+    try{
+      navigator.clipboard.writeText(roomId);
+      alert('Room Id copied!')
+    }catch(err){
+      alert('could not copy Room Id');
+      console.log(err)
+    }
+  }
+
+
+  function leaveRoom(){
+      reactnavigate('/auth')
   }
 
   if(!userName || !roomId){
@@ -98,8 +114,8 @@ const Editor = () => {
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
         </div>
         <div className="flex flex-col gap-5">
-        <button className="text-white bg-[#1F75FE] rounded py-2 font-medium hover:bg-[#034694] duration-300">Copy roomId</button>
-          <button className="text-white bg-[#1F75FE] rounded py-2 font-medium hover:bg-[#034694] duration-300">Leave</button>
+        <button onClick={copyRoomId} className="text-black bg-white rounded py-2 font-bold hover:bg-slate-400 duration-200">Copy RoomId</button>
+          <button onClick={leaveRoom} className="text-black bg-[#1F75FE] rounded py-2 font-bold hover:bg-[#034694] duration-200 ">Leave</button>
         </div>
         </div>
       </div>
@@ -110,14 +126,14 @@ const Editor = () => {
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
         </div>
           <div className="flex flex-col gap-3">
-          <button className="text-white bg-[#1F75FE] rounded py-2 px-2 font-medium hover:bg-[#034694] duration-300">Copy roomId</button>
-          <button className="text-white bg-[#1F75FE] rounded py-2 font-medium hover:bg-[#034694] duration-300">Leave</button>
+          <button onClick={copyRoomId} className="text-black bg-white rounded py-2 px-2 font-bold hover:bg-slate-400 duration-200">Copy roomId</button>
+          <button onClick={leaveRoom} className="text-black bg-[#1F75FE] rounded py-2 font-bold hover:bg-[#034694] duration-200">Leave</button>
           </div>
       </div>
 
       {/* Editor */}
       <div className="col-span-6 md:col-span-5">
-        <CodeEditor socketRef={socketRef} roomId={roomId}/>
+        <CodeEditor socketRef={socketRef} roomId={roomId} />
       </div>
     </div>
     </div>
