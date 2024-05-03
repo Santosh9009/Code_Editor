@@ -1,10 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import Editor, { Monaco, OnMount,useMonaco } from '@monaco-editor/react';
+import Editor, { OnMount,useMonaco } from '@monaco-editor/react';
 // import { editor } from 'monaco-editor/esm/vs/editor/editor.api';
 import { editor } from "monaco-editor";
 import { ACTIONS } from '../utils/action';
 import { Socket } from 'socket.io-client';
-import { json } from 'react-router-dom';
 
 interface CodeEditorProps {
   socketRef: React.MutableRefObject<null | Socket>;
@@ -49,7 +48,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
 
   useEffect(() => {
     if (monaco) {
-      import('monaco-themes/themes/Dracula.json')
+      import('monaco-themes/themes/Blackboard.json')
         .then(data => {
           const monokaiTheme = data; // Assuming the theme data is exported as default
           monaco.editor.defineTheme('monokai', monokaiTheme as editor.IStandaloneThemeData);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getRandomColor } from './color'
+import { getRandomColor } from '../utils/color'
 export const Clients = ({username}:{username:string}) => {
   const [color, setColor ] = useState('');
 

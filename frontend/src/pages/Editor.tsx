@@ -6,6 +6,7 @@ import { CodeEditor } from "../components/CodeEditor";
 import { initSocket } from "../utils/socket";
 import { Socket } from "socket.io-client";
 import { ACTIONS } from "../utils/action";
+import LangSelector from "../components/LangSelector";
 
 type Client = {
   socketId: number;
@@ -94,22 +95,23 @@ const Editor = () => {
      <div>
      <div className="bg-black p-4 flex justify-between items-center">
         {/* Logo */}
-        <img src={logo} alt="Logo" className="h-8" />
+        <img src={logo} alt="Logo" className="h-7" />
         <button
           className="md:hidden text-white bg-[#1F75FE] rounded p-2"
           onClick={() => setSidebarVisible(!sidebarVisible)}
         >
           {sidebarVisible ? 'Close Menu' : 'Open Menu'}
         </button>
+        <LangSelector/>
       </div>
-      <div className="h-[.07rem] w-full bg-slate-300"></div>
+      <div className="h-[.03rem] w-full bg-slate-300"></div>
      </div>
 
 
     <div className=" bg-black grid grid-cols-6">
 
       {/* Sidebar (visible on larger screens) */}
-      <div className={`sidebar hidden md:block bg-[#121c25] py-6 px-4 gap-5 max-h-full sticky`}>
+      <div className={`sidebar hidden md:block bg-[#192144] py-6 px-4 gap-5 max-h-full sticky`}>
         <div className="flex flex-col justify-between h-[85vh]">
         <div className="flex overflow-hidden flex-wrap gap-5">
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
@@ -122,7 +124,7 @@ const Editor = () => {
       </div>
 
       {/* Sidebar (visible on smaller screens) */}
-      <div className={`sidebar bg-[#121c25] py-6 px-4 gap-5 w-screen md:hidden flex flex-col justify-between ${sidebarVisible ? 'block' : 'hidden'}`}>
+      <div className={`sidebar bg-[#192144] py-6 px-4 gap-5 w-screen md:hidden flex flex-col justify-between ${sidebarVisible ? 'block' : 'hidden'}`}>
         <div className="flex gap-5">
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
         </div>
