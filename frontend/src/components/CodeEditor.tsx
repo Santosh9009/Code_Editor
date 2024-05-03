@@ -4,6 +4,8 @@ import Editor, { OnMount,useMonaco } from '@monaco-editor/react';
 import { editor } from "monaco-editor";
 import { ACTIONS } from '../utils/action';
 import { Socket } from 'socket.io-client';
+import { useRecoilValue } from 'recoil';
+import { langState } from '../ store/atom';
 
 interface CodeEditorProps {
   socketRef: React.MutableRefObject<null | Socket>;
@@ -15,6 +17,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const userTypingRef = useRef<boolean>(true);
   const monaco = useMonaco();
+  const language = useRecoilValue(langState);
 
   const onMount: OnMount = (editorInstance) => {
     editorRef.current = editorInstance;
@@ -48,7 +51,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
 
   useEffect(() => {
     if (monaco) {
-      import('monaco-themes/themes/Blackboard.json')
+      import('monaco-themes/themes/Twilight.json')
         .then(data => {
           const monokaiTheme = data; // Assuming the theme data is exported as default
           monaco.editor.defineTheme('monokai', monokaiTheme as editor.IStandaloneThemeData);
@@ -68,8 +71,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
 
   return (
     <Editor 
-      language="javascript"
-      theme="monokai"
+      language={language.value}
       onMount={onMount}
       options={{
         wordWrap: 'on',

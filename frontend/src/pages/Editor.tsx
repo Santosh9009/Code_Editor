@@ -93,7 +93,7 @@ const Editor = () => {
   return (
     <div className="h-screen">
      <div>
-     <div className="bg-black p-4 flex justify-between items-center">
+     <div className="bg-[#070707] p-4 flex justify-between items-center">
         {/* Logo */}
         <img src={logo} alt="Logo" className="h-7" />
         <button
@@ -102,7 +102,10 @@ const Editor = () => {
         >
           {sidebarVisible ? 'Close Menu' : 'Open Menu'}
         </button>
+        <div className="flex gap-5">
+        <button className="bg-[#2F4858] px-4 py-1 rounded-sm text-[#00BFFF] hover:bg-[#12EAEA] hover:text-white transition-colors active:bg-white active:text-black active:duration-200">RUN</button>
         <LangSelector/>
+        </div>
       </div>
       <div className="h-[.03rem] w-full bg-slate-300"></div>
      </div>
@@ -111,7 +114,7 @@ const Editor = () => {
     <div className=" bg-black grid grid-cols-6">
 
       {/* Sidebar (visible on larger screens) */}
-      <div className={`sidebar hidden md:block bg-[#192144] py-6 px-4 gap-5 max-h-full sticky`}>
+      <div className={`sidebar hidden md:block bg-[#222c35] py-6 px-4 gap-5 max-h-full sticky`}>
         <div className="flex flex-col justify-between h-[85vh]">
         <div className="flex overflow-hidden flex-wrap gap-5">
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}

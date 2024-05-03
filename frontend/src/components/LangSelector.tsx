@@ -33,12 +33,15 @@ const LangSelector = () => {
 
   return (
     <Select
-      className="text-blue-500 transition-all duration-300 bg-white"
+      className="text-blue-500 transition-all duration-400 bg-white"
       options={languageOptions}
       labelField="label"
       valueField="value"
       values={selectedValue ? [selectedValue] : []}
       onChange={handleChange}
+      backspaceDelete={false}
+      clearable={false}
+      closeOnClickInput={true}
     />
   );
 };
