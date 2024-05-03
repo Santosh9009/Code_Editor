@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import Editor, { OnMount } from '@monaco-editor/react';
-import { editor } from 'monaco-editor/esm/vs/editor/editor.api';
+import Editor, { Monaco, OnMount,useMonaco } from '@monaco-editor/react';
+// import { editor } from 'monaco-editor/esm/vs/editor/editor.api';
+import { editor } from "monaco-editor";
 import { ACTIONS } from '../utils/action';
 import { Socket } from 'socket.io-client';
+import { json } from 'react-router-dom';
 
 interface CodeEditorProps {
   socketRef: React.MutableRefObject<null | Socket>;
@@ -13,10 +15,11 @@ interface CodeEditorProps {
 export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , codesync}) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const userTypingRef = useRef<boolean>(true);
+  const monaco = useMonaco();
 
   const onMount: OnMount = (editorInstance) => {
     editorRef.current = editorInstance;
-    // editorRef.current?.focus();
+    editorRef.current?.focus
 
     // Provide initial code value or handle null case
     const initialCode = '// Start writing here...';
@@ -45,17 +48,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
   };
 
   useEffect(() => {
+    if (monaco) {
+      import('monaco-themes/themes/Dracula.json')
+        .then(data => {
+          const monokaiTheme = data; // Assuming the theme data is exported as default
+          monaco.editor.defineTheme('monokai', monokaiTheme as editor.IStandaloneThemeData);
+          monaco.editor.setTheme('monokai');
+        })
+    }
+    
+  
     const cleanup = () => {
       // Cleanup function to unsubscribe from socket events
       socketRef.current?.off(ACTIONS.CODE_CHANGE);
     };
     return cleanup;
-  }, [socketRef]);
+  }, [socketRef,monaco]);
+  
+
 
   return (
-    <Editor
+    <Editor 
       language="javascript"
-      theme="vs-dark"
+      theme="monokai"
       onMount={onMount}
       options={{
         wordWrap: 'on',
