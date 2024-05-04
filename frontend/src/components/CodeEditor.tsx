@@ -51,7 +51,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
 
   useEffect(() => {
     if (monaco) {
-      import('monaco-themes/themes/Twilight.json')
+      import('monaco-themes/themes/Dracula.json')
         .then(data => {
           const monokaiTheme = data; // Assuming the theme data is exported as default
           monaco.editor.defineTheme('monokai', monokaiTheme as editor.IStandaloneThemeData);

@@ -7,6 +7,8 @@ import { initSocket } from "../utils/socket";
 import { Socket } from "socket.io-client";
 import { ACTIONS } from "../utils/action";
 import LangSelector from "../components/LangSelector";
+import { useRecoilValue } from "recoil";
+import { langState } from "../ store/atom";
 
 type Client = {
   socketId: number;
@@ -22,6 +24,7 @@ const Editor = () => {
   const reactnavigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const codeRef = useRef<string | null>(null);
+  const { value } = useRecoilValue(langState);
 
   useEffect(()=>{
     const init = async()=>{
@@ -60,6 +63,7 @@ const Editor = () => {
     return ()=>{
       socketRef.current?.disconnect();
       socketRef.current?.off(ACTIONS.JOINED);
+      socketRef.current?.off(ACTIONS.RUN_CODE);
       socketRef.current?.off(ACTIONS.DISCONNECTED);
     }
   },[])
@@ -85,6 +89,12 @@ const Editor = () => {
       reactnavigate('/auth')
   }
 
+  function handleRun() {
+    const code = codeRef.current;
+
+    socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:value ,code , roomId });
+  }
+
   if(!userName || !roomId){
     <Navigate to={'/auth'}/>
   }
@@ -95,39 +105,39 @@ const Editor = () => {
      <div>
      <div className="bg-[#070707] p-4 flex justify-between items-center">
         {/* Logo */}
-        <img src={logo} alt="Logo" className="h-7" />
+        <img src={logo} alt="Logo" className="h-4 md:h-7" />
         <button
-          className="md:hidden text-white bg-[#1F75FE] rounded p-2"
+          className=" text-sm md:hidden text-white bg-[#1F75FE] rounded p-2"
           onClick={() => setSidebarVisible(!sidebarVisible)}
         >
-          {sidebarVisible ? 'Close Menu' : 'Open Menu'}
+          {sidebarVisible ? 'Close' : 'Open'}
         </button>
-        <div className="flex gap-5">
-        <button className="bg-[#2F4858] px-4 py-1 rounded-sm text-[#00BFFF] hover:bg-[#12EAEA] hover:text-white transition-colors active:bg-white active:text-black active:duration-200">RUN</button>
+        {!sidebarVisible && <div className="flex gap-3 md:gap-5">
+        <button onClick={handleRun} className="text-sm md:text-base bg-[#2F4858] px-4 py-1 rounded-sm text-[#00BFFF] hover:bg-[#12EAEA] hover:text-black transition-colors active:bg-white active:text-black active:duration-200">RUN</button>
         <LangSelector/>
-        </div>
+        </div>}
       </div>
-      <div className="h-[.03rem] w-full bg-slate-300"></div>
+      {/* <div className="h-[.03rem] w-full bg-slate-300"></div> */}
      </div>
 
 
     <div className=" bg-black grid grid-cols-6">
 
       {/* Sidebar (visible on larger screens) */}
-      <div className={`sidebar hidden md:block bg-[#222c35] py-6 px-4 gap-5 max-h-full sticky`}>
+      <div className={`sidebar hidden md:block bg-[#1b1b23] py-6 px-4 gap-5 max-h-full sticky border-[.03rem] border-black`}>
         <div className="flex flex-col justify-between h-[85vh]">
         <div className="flex overflow-hidden flex-wrap gap-5">
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
         </div>
         <div className="flex flex-col gap-5">
         <button onClick={copyRoomId} className="text-black bg-white rounded py-2 font-bold hover:bg-slate-400 duration-200">Copy RoomId</button>
-          <button onClick={leaveRoom} className="text-black bg-[#1F75FE] rounded py-2 font-bold hover:bg-[#034694] duration-200 ">Leave</button>
+          <button onClick={leaveRoom} className="text-black bg-[#1098F7] rounded py-2 font-bold hover:bg-[#034694] duration-200 ">Leave</button>
         </div>
         </div>
       </div>
 
       {/* Sidebar (visible on smaller screens) */}
-      <div className={`sidebar bg-[#192144] py-6 px-4 gap-5 w-screen md:hidden flex flex-col justify-between ${sidebarVisible ? 'block' : 'hidden'}`}>
+      <div className={`sidebar bg-[#191920] py-6 px-4 gap-5 w-screen md:hidden flex flex-col justify-between ${sidebarVisible ? 'block' : 'hidden'}`}>
         <div className="flex gap-5">
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
         </div>

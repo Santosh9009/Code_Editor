@@ -41,7 +41,6 @@ io.on("connection", (socket) => {
 
 // code_change
   socket.on(ACTIONS.CODE_CHANGE,({roomId,code}:{roomId:string,code:string})=>{
-    console.log(code)
     socket.broadcast.to(roomId).emit(ACTIONS.CODE_CHANGE,{code})
   })
   
@@ -49,6 +48,19 @@ io.on("connection", (socket) => {
   // code_sync
   socket.on(ACTIONS.SYNC_CODE,({code,socketId}:{code:string,socketId:string})=>{
     io.to(socketId).emit(ACTIONS.CODE_CHANGE,{code})
+  })
+
+  // code_run
+  socket.on(ACTIONS.RUN_CODE,({lang ,code, roomId}:{lang:string,code:string,roomId:string})=>{
+    console.log(code)
+    console.log(lang)
+
+    try{
+      const result= eval(code);
+      console.log(result);
+    }catch(err){
+      console.log("some error occured",err)
+    }
   })
 
 // disconnet
@@ -67,7 +79,7 @@ io.on("connection", (socket) => {
   })
 
   socket.on('disconnect',()=>{
-    console.log(socket.id)
+    console.log(socket.id,"disconnected")
   })
   
 
