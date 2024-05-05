@@ -4,18 +4,19 @@ import { useRecoilState } from "recoil";
 import { langState } from "../ store/atom";
 
 interface LanguageOption {
-  label: string,
-  value: string,
+  label: string;
+  value: string;
 }
 
 const LangSelector = () => {
   // const [selectedValue, setSelectedValue] = useState<LanguageOption | null>(null);
-  const [selectedValue, setSelectedValue] = useRecoilState(langState)
+  const [selectedValue, setSelectedValue] = useRecoilState(langState);
 
   const languageOptions: LanguageOption[] = [
     { label: "JavaScript", value: "javascript" },
     { label: "Python", value: "python" },
     { label: "Java", value: "java" },
+    { label: "C++", value: "cpp" },
     // Add more languages as needed
   ];
 
@@ -25,10 +26,8 @@ const LangSelector = () => {
 
   useEffect(() => {
     console.log(selectedValue);
-  
-  
-    return () => {
-    };
+
+    return () => {};
   }, [selectedValue]);
 
   return (
