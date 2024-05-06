@@ -16,7 +16,7 @@ const LangSelector = () => {
     { label: "JavaScript", value: "javascript" },
     { label: "Python", value: "python" },
     { label: "Java", value: "java" },
-    { label: "C++", value: "cpp" },
+    { label: "C++", value: "c++" },
     // Add more languages as needed
   ];
 

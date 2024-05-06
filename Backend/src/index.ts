@@ -2,6 +2,8 @@ import express from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { ACTIONS } from "./Actions";
+import axios from 'axios';
+import { getVersion } from "./Getlang";
 
 const app = express();
 const server = createServer(app);
@@ -51,15 +53,25 @@ io.on("connection", (socket) => {
   })
 
   // code_run
-  socket.on(ACTIONS.RUN_CODE,({lang ,code, roomId}:{lang:string,code:string,roomId:string})=>{
-    console.log(code)
-    console.log(lang)
+  socket.on(ACTIONS.RUN_CODE,async({lang ,code, roomId}:{lang:string,code:string,roomId:string})=>{
+  
+    const version = await getVersion(lang);
+    try {
+      const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
+        language: lang,
+        version: version,
+        files: [{ content: code }]
+      });
 
-    try{
-      const result= eval(code);
-      console.log(result);
-    }catch(err){
-      console.log("some error occured",err)
+      const output = response.data.run.output;
+      console.log(output);
+      
+      // Emit the output to the room
+      io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { output });
+    } catch (error) {
+      console.error("Error executing code:", error);
+      // Emit an error message to the room
+      io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
     }
   })
 
