@@ -53,27 +53,40 @@ io.on("connection", (socket) => {
   })
 
   // code_run
-  socket.on(ACTIONS.RUN_CODE,async({lang ,code, roomId}:{lang:string,code:string,roomId:string})=>{
-  
+  socket.on(ACTIONS.RUN_CODE, async ({ lang, code, roomId }: { lang: string, code: string, roomId: string }) => {
+
     const version = await getVersion(lang);
     try {
-      const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
-        language: lang,
-        version: version,
-        files: [{ content: code }]
-      });
+        const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
+            language: lang,
+            version: version,
+            files: [{ content: code }]
+        });
 
-      const output = response.data.run.output;
-      console.log(output);
-      
-      // Emit the output to the room
-      io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { output });
+        const stdout = response.data.run.stdout;
+        let stderr = response.data.run.stderr;
+        let actualError = null;
+
+        // Check if stderr is undefined or null
+        if (stderr === undefined || stderr === null) {
+            actualError = stderr;
+        } else {
+            // Remove 'piston' from stderr
+            stderr = stderr.replace(/piston/g, '');
+        }
+
+        console.log(stdout, stderr);
+
+        // Emit the output to the room
+        io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
     } catch (error) {
-      console.error("Error executing code:", error);
-      // Emit an error message to the room
-      io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
+        console.error("Error executing code:", error);
+        // Emit an error message to the room
+        io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
     }
-  })
+})
+
+
 
 // disconnet
   socket.on('disconnecting',()=>{

@@ -15,6 +15,7 @@ type Client = {
   username: string;
 };
 
+
 const Editor = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [searchParams] = useSearchParams();
@@ -48,6 +49,11 @@ const Editor = () => {
         setClients(clients)
         socketRef.current?.emit(ACTIONS.SYNC_CODE, {code:codeRef.current, socketId})
       })
+
+      // listening to output
+      socketRef.current?.on(ACTIONS.CODE_OUTPUT,({stdout,error})=>{
+        console.log(stdout,error)
+      });
 // Listening to disconnected
       socketRef.current?.on(ACTIONS.DISCONNECTED,({username, socketId})=>{
         console.log(username, socketId)
@@ -64,6 +70,7 @@ const Editor = () => {
       socketRef.current?.disconnect();
       socketRef.current?.off(ACTIONS.JOINED);
       socketRef.current?.off(ACTIONS.RUN_CODE);
+      socketRef.current?.off(ACTIONS.CODE_OUTPUT);
       socketRef.current?.off(ACTIONS.DISCONNECTED);
     }
   },[])
