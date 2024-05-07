@@ -78,11 +78,11 @@ io.on("connection", (socket) => {
         console.log(stdout, stderr);
 
         // Emit the output to the room
-        socket.broadcast.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
+        io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
     } catch (error) {
         console.error("Error executing code")
         // Emit an error message to the room
-        socket.broadcast.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
+        io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
     }
 })
 

@@ -9,7 +9,6 @@ export function Output({ output, err }: { output: string | undefined; err: strin
   const toggleHeight = () => {
     setIsExpanded(prevstate => !prevstate);
     setHeight(prevHeight => (prevHeight === "6vh" ? "40vh" : "6vh"));
-    // console.log(output,err);
   };
 
   useEffect(() => {

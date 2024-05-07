@@ -1,0 +1,34 @@
+.loader {
+  width: 20px; /* Adjust width to fit the button */
+  height: 20px; /* Adjust height to fit the button */
+  border-radius: 50%;
+  display: inline-block;
+  border-top: 1.8px solid #FFF; /* Adjust border thickness */
+  border-right: 1.8px solid transparent; /* Adjust border thickness */
+  box-sizing: border-box;
+  position: relative; /* Added to position the ::after element */
+  animation: rotation 1s linear infinite;
+}
+
+.loader::after {
+  content: '';
+  box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20px; /* Adjust width to fit the button */
+  height: 20px; /* Adjust height to fit the button */
+  border-radius: 50%;
+  border-left: 1.8px solid #FF3D00; /* Adjust border thickness */
+  border-bottom: 1.8px solid transparent; /* Adjust border thickness */
+  animation: rotation 0.5s linear infinite reverse;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+} 

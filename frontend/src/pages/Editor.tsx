@@ -10,6 +10,7 @@ import LangSelector from "../components/LangSelector";
 import { useRecoilState} from "recoil";
 import { langState } from "../ store/atom";
 import { Output } from "../components/Output";
+import { Spinner } from "../components/Spinner";
 
 type Client = {
   socketId: number;
@@ -30,6 +31,7 @@ const Editor = () => {
   const [language, setlanguage] = useRecoilState(langState);
   const [output, setOutput] = useState<string>();
   const [err, setErr] = useState<string>();
+  const [loading, setLoading ]= useState(false);
 
   useEffect(()=>{
     const init = async()=>{
@@ -64,6 +66,7 @@ const Editor = () => {
       socketRef.current?.on(ACTIONS.CODE_OUTPUT,({stdout,error})=>{
         setOutput(stdout)
         setErr(error)
+        setLoading(false);
       });
 // Listening to disconnected
       socketRef.current?.on(ACTIONS.DISCONNECTED,({username, socketId})=>{
@@ -111,6 +114,7 @@ const Editor = () => {
     const code = codeRef.current;
 
     socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:language.label ,code , roomId });
+    setLoading(true);
   }
 
 
@@ -132,7 +136,7 @@ const Editor = () => {
           {sidebarVisible ? 'Close' : 'Open'}
         </button>
         {!sidebarVisible && <div className="flex gap-3 md:gap-5">
-        <button onClick={handleRun} className="text-sm md:text-base bg-[#2F4858] px-4 py-1 rounded-sm text-[#00BFFF] hover:bg-[#12EAEA] hover:text-black transition-colors active:bg-white active:text-black active:duration-200">RUN</button>
+        <button onClick={handleRun} className="text-sm md:text-base bg-[#2F4858] px-4 py-1 rounded-sm text-[#00BFFF] hover:bg-[#12EAEA] hover:text-black transition-colors active:bg-white active:text-black active:duration-200">{loading?<Spinner/>:'RUN'}</button>
         <LangSelector socketRef={socketRef} roomId={roomId}/>
         </div>}
       </div>
