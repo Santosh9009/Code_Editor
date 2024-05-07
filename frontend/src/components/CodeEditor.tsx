@@ -74,11 +74,14 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
       language={language.value}
       onMount={onMount}
       options={{
-        wordWrap: 'on',
-        padding: {
-          top: 20,
-          bottom: 20,
+        minimap:{
+          enabled:false,
         },
+        wordWrap: 'on',
+        // padding: {
+        //   top: 20,
+        //   bottom: 20,
+        // },
         fontFamily: 'Fira Code',
         fontSize: 14,
         lineHeight: 24,

@@ -13,10 +13,10 @@ const LangSelector = () => {
   const [selectedValue, setSelectedValue] = useRecoilState(langState);
 
   const languageOptions: LanguageOption[] = [
-    { label: "JavaScript", value: "javascript" },
-    { label: "Python", value: "python" },
-    { label: "Java", value: "java" },
-    { label: "C++", value: "c++" },
+    { label: "javaScript", value: "javascript" },
+    { label: "python", value: "python" },
+    { label: "java", value: "java" },
+    { label: "c++", value: "cpp" },
     // Add more languages as needed
   ];
 

@@ -7,8 +7,9 @@ import { initSocket } from "../utils/socket";
 import { Socket } from "socket.io-client";
 import { ACTIONS } from "../utils/action";
 import LangSelector from "../components/LangSelector";
-import { useRecoilValue } from "recoil";
-import { langState } from "../ store/atom";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { Err, Outputvalue, langState } from "../ store/atom";
+import { Output } from "../components/Output";
 
 type Client = {
   socketId: number;
@@ -25,7 +26,9 @@ const Editor = () => {
   const reactnavigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const codeRef = useRef<string | null>(null);
-  const { value } = useRecoilValue(langState);
+  const { label } = useRecoilValue(langState);
+  const [output, setOutput] = useRecoilState<string>(Outputvalue);
+  const [err, setErr] = useRecoilState<string>(Err);
 
   useEffect(()=>{
     const init = async()=>{
@@ -52,6 +55,8 @@ const Editor = () => {
 
       // listening to output
       socketRef.current?.on(ACTIONS.CODE_OUTPUT,({stdout,error})=>{
+        setOutput(output)
+        setErr(err)
         console.log(stdout,error)
       });
 // Listening to disconnected
@@ -99,7 +104,7 @@ const Editor = () => {
   function handleRun() {
     const code = codeRef.current;
 
-    socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:value ,code , roomId });
+    socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:label ,code , roomId });
   }
 
   if(!userName || !roomId){
@@ -108,7 +113,7 @@ const Editor = () => {
 
 
   return (
-    <div className="h-screen">
+    <div className="h-screen overflow-y-hidden">
      <div>
      <div className="bg-[#070707] p-4 flex justify-between items-center">
         {/* Logo */}
@@ -131,7 +136,7 @@ const Editor = () => {
     <div className=" bg-black grid grid-cols-6">
 
       {/* Sidebar (visible on larger screens) */}
-      <div className={`sidebar hidden md:block bg-[#1b1b23] py-6 px-4 gap-5 max-h-full sticky border-[.03rem] border-black`}>
+      <div className={`sidebar hidden md:block bg-[#1b1b23] py-6 px-4 gap-5 max-h-full border-[.03rem] border-black`}>
         <div className="flex flex-col justify-between h-[85vh]">
         <div className="flex overflow-hidden flex-wrap gap-5">
           {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
@@ -157,6 +162,7 @@ const Editor = () => {
       {/* Editor */}
       <div className="col-span-6 md:col-span-5">
         <CodeEditor socketRef={socketRef} roomId={roomId} codesync={(code)=>codeRef.current=code}/>
+        <Output />
       </div>
     </div>
     </div>
