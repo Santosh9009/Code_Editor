@@ -49,7 +49,7 @@ io.on("connection", (socket) => {
 
   // code_sync
   socket.on(ACTIONS.SYNC_CODE,({code,socketId}:{code:string,socketId:string})=>{
-    io.to(socketId).emit(ACTIONS.CODE_CHANGE,{code})
+    socket.broadcast.to(socketId).emit(ACTIONS.CODE_CHANGE,{code})
   })
 
   // code_run
@@ -78,13 +78,19 @@ io.on("connection", (socket) => {
         console.log(stdout, stderr);
 
         // Emit the output to the room
-        io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
+        socket.broadcast.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
     } catch (error) {
         console.error("Error executing code")
         // Emit an error message to the room
-        io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
+        socket.broadcast.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
     }
 })
+
+
+// language_change
+  socket.on(ACTIONS.LANG_CHANGE,({lang_object,roomId}:{lang_object:{},roomId:string})=>{
+    socket.broadcast.to(roomId).emit(ACTIONS.LANG_CHANGE,{lang_object})
+  })
 
 
 

@@ -7,6 +7,7 @@ export const ACTIONS = {
   SYNC_CODE: "sync-code",
   RUN_CODE:"run-code",
   CODE_OUTPUT:"code-output",
+  LANG_CHANGE:"change-language",
   LEAVE: "leave",
 };
 

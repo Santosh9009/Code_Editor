@@ -7,7 +7,7 @@ import { initSocket } from "../utils/socket";
 import { Socket } from "socket.io-client";
 import { ACTIONS } from "../utils/action";
 import LangSelector from "../components/LangSelector";
-import { useRecoilValue } from "recoil";
+import { useRecoilState} from "recoil";
 import { langState } from "../ store/atom";
 import { Output } from "../components/Output";
 
@@ -15,6 +15,7 @@ type Client = {
   socketId: number;
   username: string;
 };
+
 
 
 const Editor = () => {
@@ -26,7 +27,7 @@ const Editor = () => {
   const reactnavigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const codeRef = useRef<string | null>(null);
-  const { label } = useRecoilValue(langState);
+  const [language, setlanguage] = useRecoilState(langState);
   const [output, setOutput] = useState<string>();
   const [err, setErr] = useState<string>();
 
@@ -43,7 +44,7 @@ const Editor = () => {
       })
 
 
-// listening to Joined
+// Listening to Joined
       socketRef.current.on(ACTIONS.JOINED,({clients,username,socketId})=>{
         console.log(clients)
         if(username!==userName){
@@ -53,7 +54,13 @@ const Editor = () => {
         socketRef.current?.emit(ACTIONS.SYNC_CODE, {code:codeRef.current, socketId})
       })
 
-      // listening to output
+// Listening to lang change
+      socketRef.current.on(ACTIONS.LANG_CHANGE,({lang_object})=>{
+        console.log(lang_object);
+        setlanguage(lang_object);
+      })
+
+// Listening to output
       socketRef.current?.on(ACTIONS.CODE_OUTPUT,({stdout,error})=>{
         setOutput(stdout)
         setErr(error)
@@ -103,7 +110,7 @@ const Editor = () => {
   function handleRun() {
     const code = codeRef.current;
 
-    socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:label ,code , roomId });
+    socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:language.label ,code , roomId });
   }
 
 
@@ -126,7 +133,7 @@ const Editor = () => {
         </button>
         {!sidebarVisible && <div className="flex gap-3 md:gap-5">
         <button onClick={handleRun} className="text-sm md:text-base bg-[#2F4858] px-4 py-1 rounded-sm text-[#00BFFF] hover:bg-[#12EAEA] hover:text-black transition-colors active:bg-white active:text-black active:duration-200">RUN</button>
-        <LangSelector/>
+        <LangSelector socketRef={socketRef} roomId={roomId}/>
         </div>}
       </div>
       {/* <div className="h-[.03rem] w-full bg-slate-300"></div> */}

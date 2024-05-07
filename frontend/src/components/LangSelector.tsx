@@ -1,15 +1,20 @@
-import { useEffect } from "react";
+import React,{ useEffect } from "react";
 import Select from "react-dropdown-select";
 import { useRecoilState } from "recoil";
 import { langState } from "../ store/atom";
+import { Socket } from "socket.io-client";
+import { ACTIONS } from "../utils/action";
 
 interface LanguageOption {
   label: string;
   value: string;
 }
+type prop = {
+  socketRef:React.MutableRefObject<Socket | null>,
+  roomId:string
+}
 
-const LangSelector = () => {
-  // const [selectedValue, setSelectedValue] = useState<LanguageOption | null>(null);
+const LangSelector = ({socketRef,roomId}:prop) => {
   const [selectedValue, setSelectedValue] = useRecoilState(langState);
 
   const languageOptions: LanguageOption[] = [
@@ -22,7 +27,9 @@ const LangSelector = () => {
 
   const handleChange = (selectedOptions: LanguageOption[]) => {
     setSelectedValue(selectedOptions[0] || null);
+    socketRef.current?.emit(ACTIONS.LANG_CHANGE,{lang_object:selectedOptions[0] || null,roomId});
   };
+
 
   useEffect(() => {
 
