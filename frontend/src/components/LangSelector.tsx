@@ -25,7 +25,6 @@ const LangSelector = () => {
   };
 
   useEffect(() => {
-    console.log(selectedValue);
 
     return () => {};
   }, [selectedValue]);

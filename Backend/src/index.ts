@@ -80,7 +80,7 @@ io.on("connection", (socket) => {
         // Emit the output to the room
         io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
     } catch (error) {
-        console.error("Error executing code:", error);
+        console.error("Error executing code")
         // Emit an error message to the room
         io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
     }

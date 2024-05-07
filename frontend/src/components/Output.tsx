@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 import upimg from '../assets/icons8-up-64.png';
 import downimg from '../assets/icons8-down-64 (1).png';
-import { useRecoilValue } from "recoil";
-import { Err, Outputvalue } from "../ store/atom";
 
-export function Output() {
+export function Output({ output, err }: { output: string | undefined; err: string | undefined }) {
   const [height, setHeight] = useState("6vh");
   const [isExpanded, setIsExpanded] = useState(false);
-  const output = useRecoilValue(Outputvalue);
-  const err = useRecoilValue(Err);
 
   const toggleHeight = () => {
     setIsExpanded(prevstate => !prevstate);
     setHeight(prevHeight => (prevHeight === "6vh" ? "40vh" : "6vh"));
-    console.log(output);
+    // console.log(output,err);
   };
 
   useEffect(() => {
@@ -41,8 +37,8 @@ export function Output() {
         </div>
         {isExpanded && (
           <div className="p-3 border-t-[.03rem] border-slate-400">
-            {output} {err}
-          </div>
+            {!output ? err : output}
+          </div>  
         )}
       </div>
     </div>

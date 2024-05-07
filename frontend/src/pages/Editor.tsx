@@ -7,8 +7,8 @@ import { initSocket } from "../utils/socket";
 import { Socket } from "socket.io-client";
 import { ACTIONS } from "../utils/action";
 import LangSelector from "../components/LangSelector";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { Err, Outputvalue, langState } from "../ store/atom";
+import { useRecoilValue } from "recoil";
+import { langState } from "../ store/atom";
 import { Output } from "../components/Output";
 
 type Client = {
@@ -27,8 +27,8 @@ const Editor = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const codeRef = useRef<string | null>(null);
   const { label } = useRecoilValue(langState);
-  const [output, setOutput] = useRecoilState<string>(Outputvalue);
-  const [err, setErr] = useRecoilState<string>(Err);
+  const [output, setOutput] = useState<string>();
+  const [err, setErr] = useState<string>();
 
   useEffect(()=>{
     const init = async()=>{
@@ -55,9 +55,8 @@ const Editor = () => {
 
       // listening to output
       socketRef.current?.on(ACTIONS.CODE_OUTPUT,({stdout,error})=>{
-        setOutput(output)
-        setErr(err)
-        console.log(stdout,error)
+        setOutput(stdout)
+        setErr(error)
       });
 // Listening to disconnected
       socketRef.current?.on(ACTIONS.DISCONNECTED,({username, socketId})=>{
@@ -106,6 +105,7 @@ const Editor = () => {
 
     socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:label ,code , roomId });
   }
+
 
   if(!userName || !roomId){
     <Navigate to={'/auth'}/>
@@ -162,7 +162,7 @@ const Editor = () => {
       {/* Editor */}
       <div className="col-span-6 md:col-span-5">
         <CodeEditor socketRef={socketRef} roomId={roomId} codesync={(code)=>codeRef.current=code}/>
-        <Output />
+        <Output output={output} err={err}/>
       </div>
     </div>
     </div>
