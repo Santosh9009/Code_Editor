@@ -78,10 +78,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
           enabled:false,
         },
         wordWrap: 'on',
-        // padding: {
-        //   top: 20,
-        //   bottom: 20,
-        // },
+        padding: {
+          top: 20,
+        },
         fontFamily: 'Fira Code',
         fontSize: 14,
         lineHeight: 24,

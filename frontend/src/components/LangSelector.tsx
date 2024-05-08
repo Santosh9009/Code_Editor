@@ -22,6 +22,7 @@ const LangSelector = ({socketRef,roomId}:prop) => {
     { label: "python", value: "python" },
     { label: "java", value: "java" },
     { label: "c++", value: "cpp" },
+    { label: "typescript", value: "typescript" },
     // Add more languages as needed
   ];
 

@@ -11,7 +11,7 @@ export function Output({ output, err }: { output: string | undefined; err: strin
     setHeight(prevHeight => (prevHeight === "6vh" ? "40vh" : "6vh"));
   };
 
-  useEffect(() => {
+  useEffect(() => { 
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === "Escape") {
         toggleHeight();
@@ -26,12 +26,12 @@ export function Output({ output, err }: { output: string | undefined; err: strin
   }, []);
 
   return (
-    <div className="absolute w-full md:w-[83.33%] bottom-0 bg-[#1b1b23] text-slate-300 z-10">
+    <div className="absolute w-full md:w-[83.33%] bottom-0 bg-[#1b1b23] text-slate-300 z-10 sha">
       <div className="transition-height duration-200" style={{ height: height }}>
         <div className="flex justify-between px-8 py-2">
-          <div className="text-[#00BFFF] underline font-extralight">OUTPUT</div>
+          <div className="text-[#00BFFF] font-extralight">OUTPUT</div>
           <button onClick={toggleHeight} className="font-extralight">
-            {isExpanded ? <img className="w-5" src={upimg} alt="up" /> : <img className="w-5" src={downimg} alt="down" />}
+            {isExpanded ? <img className="w-5" src={downimg} alt="up" /> : <img className="w-5" src={upimg} alt="down" />}
           </button>
         </div>
         {isExpanded && (
