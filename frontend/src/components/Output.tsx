@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {  useEffect, useState } from "react";
 import upimg from '../assets/icons8-up-64.png';
 import downimg from '../assets/icons8-down-64 (1).png';
 
@@ -24,6 +24,12 @@ export function Output({ output, err }: { output: string | undefined; err: strin
       window.removeEventListener("keydown", handleKeyPress);
     };
   }, []);
+
+  useEffect(()=>{
+    if(isExpanded===false){
+      toggleHeight();
+    }
+  },[output,err])
 
   return (
     <div className="absolute w-full md:w-[83.33%] bottom-0 bg-[#1b1b23] text-slate-300 z-10 sha">
