@@ -1,5 +1,11 @@
 .home {
   background-color: #2234ae;
-  background-image: linear-gradient(315deg, #2234ae 0%, #191714 74%);
-  
+  background-image: linear-gradient(to bottom,  black 35%,#2234ae);
 }
+.gradient-text {
+  font-size: 72px;
+  background: -webkit-linear-gradient(#eee, #898989);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
