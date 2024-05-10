@@ -1,21 +1,26 @@
 import { FormEvent, useState } from "react";
 import logo from "../assets/code-cast-high-resolution-logo-transparent.png";
 import { v4 as uuid } from 'uuid';
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+
 
 export const Auth = () => {
   const [roomId, setroomId] = useState("");
   const [username, setUsername] = useState("");
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     navigate(`/editor?username=${encodeURIComponent(username)}&roomId=${encodeURIComponent(roomId)}`);
   };
   return (
-    <div className="h-screen bg-[#15202B] flex justify-center items-center">
-      <div className="max-w-sm mx-auto text-white p-6 bg-[#192734] rounded-md">
+    <div className="h-screen bg-[#12132d] flex justify-center items-center">
+      <motion.div
+       initial={{ y: 100 ,opacity:0}}
+       whileInView={{ y: 0 ,opacity:100}}
+       transition={{duration:0.5}}
+      className="max-w-sm mx-auto text-white p-6 bg-[#1A1B41] rounded-md">
         <div className="mb-8">
           <img src={logo} alt="" />
           <div className="h-[.07rem] w-full bg-slate-500 mt-6"></div>
@@ -63,7 +68,7 @@ export const Auth = () => {
             </span>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };
