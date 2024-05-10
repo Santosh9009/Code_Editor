@@ -1,11 +1,24 @@
 .home {
   background-color: #2234ae;
-  background-image: linear-gradient(to bottom,  black 35%,#2234ae);
+  background-image: linear-gradient(to bottom,  black 35%, #2234ae);
 }
+
 .gradient-text {
   font-size: 72px;
   background: -webkit-linear-gradient(#eee, #898989);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text; /* Standard */
+  -moz-background-clip: text; /* Firefox */
+  -webkit-background-clip: text; /* Chrome, Safari, Opera */
+  -ms-background-clip: text; /* Internet Explorer */
 }
+
+.auth{
+  background-image: url(../assets/9019808.jpg);
+  width: 100%;
+  height: 100vh;
+  object-fit: contain;
+}
+
 

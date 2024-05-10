@@ -33,7 +33,7 @@ export function Output({ output, err }: { output: string | undefined; err: strin
 
   return (
     <div className="absolute w-full md:w-[83.33%] bottom-0 bg-[#1b1b23] text-slate-300 z-10 sha">
-      <div className="transition-height duration-200" style={{ height: height }}>
+      <div className="transition-height duration-300" style={{ height: height }}>
         <div className="flex justify-between px-8 py-2">
           <div className="text-[#00BFFF] font-extralight">OUTPUT</div>
           <button onClick={toggleHeight} className="font-extralight">
