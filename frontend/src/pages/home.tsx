@@ -2,19 +2,21 @@ import { Link } from "react-router-dom";
 import logo from "../assets/code-cast-high-resolution-logo-transparent.png";
 import "./home.css";
 import { motion } from "framer-motion";
+import { Features } from "../components/Features";
+import Footer from "../components/Footer";
+
 const Home = () => {
   return (
-    <div>
-      <nav className="bg-black p-6 w-full">
+    <div className="home">
+      <nav className="p-6 w-full">
         <div className="flex justify-between items-center">
           <img className="h-4 md:h-7" src={logo} alt="" />
-          {/* Add more navigation links here if needed */}
           <button className="bg-slate-300 px-4 py-2 rounded-full font-semibold hover:scale-105 duration-200 hover:bg-white">
             <Link to={"/auth"}>Get Started</Link>
           </button>
         </div>
       </nav>
-      <div className="min-h-screen w-full flex flex-col justify-center items-center text-white gap-10 text-center home">
+      <div className="min-h-screen w-full flex flex-col justify-center items-center text-white gap-10 text-center">
         <motion.div
           initial={{ y: 100 ,opacity:0}}
           whileInView={{ y: 0 ,opacity:100}}
@@ -32,6 +34,10 @@ const Home = () => {
           <Link to={"/auth"}>Start Coding Together Today!</Link>
         </button>
       </div>
+
+      {/* Features Section */}
+    <Features/>
+    <Footer/>
     </div>
   );
 };

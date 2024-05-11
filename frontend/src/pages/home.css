@@ -1,6 +1,6 @@
 .home {
   background-color: #2234ae;
-  background-image: linear-gradient(to bottom,  black 35%, #2234ae);
+  background-image: linear-gradient(to bottom,  black , #2234ae 65%);
 }
 
 .gradient-text {
