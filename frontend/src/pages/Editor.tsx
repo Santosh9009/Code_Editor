@@ -11,6 +11,7 @@ import { useRecoilState} from "recoil";
 import { langState } from "../ store/atom";
 import { Output } from "../components/Output";
 import { Spinner } from "../components/Spinner";
+import { ToastContainer, toast } from "react-toastify";
 
 type Client = {
   socketId: number;
@@ -50,7 +51,9 @@ const Editor = () => {
       socketRef.current.on(ACTIONS.JOINED,({clients,username,socketId})=>{
         console.log(clients)
         if(username!==userName){
-          alert(`${username} entered the room`)
+          toast.info(`${username} entered the room`,{
+            position:"top-center"
+          })
         }
         setClients(clients)
         socketRef.current?.emit(ACTIONS.SYNC_CODE, {code:codeRef.current, socketId})
@@ -75,7 +78,9 @@ const Editor = () => {
         setClients((prev)=>{
           return prev.filter(client=>client.socketId!==socketId)
         })
-        alert(`${username} left the room`)
+        toast.error(`${username} left the room`,{
+          position:"top-center"
+        })
       })
     }
     init();
@@ -98,9 +103,16 @@ const Editor = () => {
   function copyRoomId(){
     try{
       navigator.clipboard.writeText(roomId);
-      alert('Room Id copied!')
+
+      // alert('Room Id copied!')
+      toast.success("RoomId Copied!", {
+        position: "top-center"
+      });
+
     }catch(err){
-      alert('could not copy Room Id');
+      toast.error('could not copy Room Id', {
+        position: "top-center"
+      });
       console.log(err)
     }
   }
@@ -125,6 +137,7 @@ const Editor = () => {
 
   return (
     <div className="h-screen overflow-y-hidden">
+      <ToastContainer/>
      <div>
      <div className="bg-[#070707] p-4 flex justify-between items-center">
         {/* Logo */}
