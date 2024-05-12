@@ -3,7 +3,7 @@ import { FaGithub, FaTwitter, FaLinkedin } from "react-icons/fa";
 const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white py-12">
-      <div className="flex justify-center items-center mb-8">
+      <div className="flex justify-center items-center mb-8 px-5">
         <a
           href="https://github.com/Santosh9009"
           target="_blank"

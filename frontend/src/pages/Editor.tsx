@@ -1,4 +1,4 @@
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Clients } from "../components/Clients";
 import logo from '../assets/code-cast-high-resolution-logo-transparent.png';
 import { useEffect, useRef, useState } from "react";
@@ -128,7 +128,7 @@ const Editor = () => {
      <div>
      <div className="bg-[#070707] p-4 flex justify-between items-center">
         {/* Logo */}
-        <img src={logo} alt="Logo" className="h-4 md:h-7" />
+        <Link to={'/'}><img src={logo} alt="Logo" className="h-4 md:h-7" /></Link>
         <button
           className=" text-sm md:hidden text-white bg-[#1F75FE] rounded p-2"
           onClick={() => setSidebarVisible(!sidebarVisible)}
