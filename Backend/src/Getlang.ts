@@ -1,4 +1,5 @@
 const axios = require('axios');
+require('dotenv').config();
 
 const languageArray = [
     { language: 'java', version: '15.0.2' },
@@ -16,7 +17,7 @@ type objtype = {
 }
 export async function getVersion(language:string){
     try{
-        const runtimes = await axios.get("https://emkc.org/api/v2/piston/runtimes")
+        const runtimes = await axios.get(process.env.EXECUTIONURL)
         const array = runtimes.data.filter((obj:objtype)=>obj.language===language)
         return array[0].version
     }catch(error){
