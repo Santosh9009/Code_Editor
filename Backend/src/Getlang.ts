@@ -17,7 +17,7 @@ type objtype = {
 }
 export async function getVersion(language:string){
     try{
-        const runtimes = await axios.get(process.env.EXECUTIONURL)
+        const runtimes = await axios.get(process.env.RUNTIMES_URL)
         const array = runtimes.data.filter((obj:objtype)=>obj.language===language)
         return array[0].version
     }catch(error){

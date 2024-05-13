@@ -4,6 +4,10 @@ import { Server, Socket } from "socket.io";
 import { ACTIONS } from "./Actions";
 import axios from 'axios';
 import { getVersion } from "./Getlang";
+require('dotenv').config();
+
+const API_URL:string = process.env.EXECUTION_URL || " ";
+
 
 const app = express();
 const server = createServer(app);
@@ -57,7 +61,7 @@ io.on("connection", (socket) => {
 
     const version = await getVersion(lang);
     try {
-        const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
+        const response = await axios.post(API_URL, {
             language: lang,
             version: version,
             files: [{ content: code }]
