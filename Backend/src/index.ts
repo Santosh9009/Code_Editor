@@ -1,6 +1,6 @@
 import express from "express";
 import { createServer } from "http";
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import { ACTIONS } from "./Actions";
 import axios from 'axios';
 import { getVersion } from "./Getlang";
