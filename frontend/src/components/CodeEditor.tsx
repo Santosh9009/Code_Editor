@@ -23,10 +23,6 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
     editorRef.current = editorInstance;
     editorRef.current?.focus
 
-    // Provide initial code value or handle null case
-    const initialCode = '// Start writing here...';
-    editorRef.current?.setValue(initialCode);
-
     // Emit code change when editor content changes
     editorRef.current?.onDidChangeModelContent(() => {
       if(userTypingRef.current){
@@ -41,7 +37,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ socketRef, roomId , code
 
     // Listen for incoming code changes from the server
     socketRef.current?.on(ACTIONS.CODE_CHANGE, ({ code }) => {
-      if (code !== null && code !== undefined) {
+      if (editorRef.current && code !== null && code !== undefined) {
         userTypingRef.current=false;
         editorRef.current?.setValue(code);
         userTypingRef.current=true;

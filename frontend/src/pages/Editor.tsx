@@ -19,7 +19,6 @@ type Client = {
 };
 
 
-
 const Editor = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [searchParams] = useSearchParams();
@@ -48,15 +47,18 @@ const Editor = () => {
 
 
 // Listening to Joined
-      socketRef.current.on(ACTIONS.JOINED,({clients,username,socketId})=>{
+      socketRef.current.on(ACTIONS.JOINED,({clients,username})=>{
         console.log(clients)
         if(username!==userName){
           toast.info(`${username} entered the room`,{
             position:"top-center"
           })
+        }else{
+          socketRef.current?.on(ACTIONS.CODE_CHANGE,({code})=>{
+            console.log(code)
+          })
         }
         setClients(clients)
-        socketRef.current?.emit(ACTIONS.SYNC_CODE, {code:codeRef.current, socketId})
       })
 
 // Listening to lang change
@@ -94,7 +96,7 @@ const Editor = () => {
     }
   },[])
 
-  function handleError(e:Event){
+  function handleError(e:Event|Error){
     console.log('socket error',e)
     alert('Socket connnection failed!');
     reactnavigate('/auth')
@@ -185,7 +187,11 @@ const Editor = () => {
 
       {/* Editor */}
       <div className="col-span-6 md:col-span-5">
-        <CodeEditor socketRef={socketRef} roomId={roomId} codesync={(code)=>codeRef.current=code}/>
+        <CodeEditor socketRef={socketRef} roomId={roomId}
+         codesync={(code) => {
+          codeRef.current = code;
+      }}
+        />
         <Output output={output} err={err}/>
       </div>
     </div>
