@@ -14,8 +14,9 @@ import { Spinner } from "../components/Spinner";
 import { ToastContainer, toast } from "react-toastify";
 
 type Client = {
-  socketId: number;
+  socketId: string;
   username: string;
+  canExecute:boolean;
 };
 
 
@@ -32,6 +33,8 @@ const Editor = () => {
   const [output, setOutput] = useState<string>();
   const [err, setErr] = useState<string>();
   const [loading, setLoading ]= useState(false);
+  const [admin , setAdmin ] = useState()
+  const [currentUser , setCurrentUser] = useState<Client | null>();
 
   useEffect(()=>{
     const init = async()=>{
@@ -47,8 +50,7 @@ const Editor = () => {
 
 
 // Listening to Joined
-      socketRef.current.on(ACTIONS.JOINED,({clients,username})=>{
-        console.log(clients)
+      socketRef.current.on(ACTIONS.JOINED,({users, admin , username})=>{
         if(username!==userName){
           toast.info(`${username} entered the room`,{
             position:"top-center"
@@ -58,8 +60,22 @@ const Editor = () => {
             console.log(code)
           })
         }
-        setClients(clients)
+        console.log(users)
+        console.log(admin)
+        setClients(users)
+        setAdmin(admin)
+        const User = users.filter((user:Client)=>user.socketId===socketRef.current?.id)
+        setCurrentUser(User[0])
       })
+
+      // socketRef.current.on(ACTIONS.JOINED, ({ users, admin, message }) => {
+      //   setAdmin(admin)
+      //   setClients(users);
+      //   if (message) {
+      //     toast.info(message); // Show a toast notification for the user that joined
+      //   }
+      // });
+      
 
 // Listening to lang change
       socketRef.current.on(ACTIONS.LANG_CHANGE,({lang_object})=>{
@@ -125,6 +141,18 @@ const Editor = () => {
   }
 
   function handleRun() {
+    if(!currentUser?.canExecute){
+      toast.error(`You are not allowed to run`,{
+        position:"top-center"
+      })
+      return;
+    }else if(codeRef.current===null || codeRef.current ===''){
+      toast.warning(`Editor is empty`,{
+        position:"top-center"
+      })
+      return;
+    }
+    
     const code = codeRef.current;
 
     socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:language.label ,code , roomId });

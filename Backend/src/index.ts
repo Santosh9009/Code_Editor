@@ -1,176 +1,173 @@
 import express from "express";
 import { createServer } from "http";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { ACTIONS } from "./Actions";
-import axios from 'axios';
-import { getVersion } from "./Getlang";
-require('dotenv').config();
+import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const API_URL = process.env.EXECUTION_URL;
-
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-interface Client {
-  socketId: string;
+// Data Structures
+interface User {
   username: string;
+  canExecute: boolean;
 }
 
-interface UserMap {
-  [socketId: string]: string;
+interface Room {
+  admin: string; // Admin's socketId
+  users: { [socketId: string]: User };
 }
-// Use a Map for user-to-socket mapping and code storage
-const userSocketMap = new Map<string, string>();
-const roomCodeMap = new Map<string, string>(); 
 
+const rooms: { [roomId: string]: Room } = {};
 
-// Utility to get clients in a room
-function getRoomClients(roomId: string): Client[] {
-  return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map((socketId) => ({
+// Utility Functions
+function getRoomUsers(roomId: string) {
+  const room = rooms[roomId];
+  if (!room) return [];
+  return Object.entries(room.users).map(([socketId, user]) => ({
     socketId,
-    username: userSocketMap.get(socketId) || "Anonymous", 
+    ...user,
   }));
 }
 
+// Function to check and generate a unique username in the room
+function getUniqueUsername(roomId: string, desiredUsername: string): string {
+  const room = rooms[roomId];
+  if (!room) return desiredUsername;  // If room doesn't exist, return as is
+  
+  const existingUsernames = Object.values(room.users).map(user => user.username);
+  
+  let uniqueUsername = desiredUsername;
+  let counter = 1;
 
+  // Check if username already exists, and if so, add a suffix
+  while (existingUsernames.includes(uniqueUsername)) {
+    uniqueUsername = `${desiredUsername}_${counter}`;
+    counter++;
+  }
 
-io.on("connection", (socket) => {
+  return uniqueUsername;
+}
 
-  // join
-  socket.on(ACTIONS.JOIN, ({ username, roomId }: { username: string, roomId: string }) => {
-    // console.log(username)
-    userSocketMap.set(socket.id, username);
+// Server Logic
+io.on("connection", (socket: Socket) => {
+  console.log(`New connection: ${socket.id}`);
+
+  // Join Room
+  socket.on(ACTIONS.JOIN, ({ username, roomId }: { username: string; roomId: string }) => {
+    if (!rooms[roomId]) {
+      // Create room and assign admin
+      rooms[roomId] = {
+        admin: socket.id,
+        users: { [socket.id]: { username, canExecute: true } },
+      };
+      socket.emit(ACTIONS.SET_ADMIN, { isAdmin: true });
+    } else {
+      // Generate a unique username if needed
+      let uniqueUsername = getUniqueUsername(roomId, username);
+      rooms[roomId].users[socket.id] = { username: uniqueUsername, canExecute: false };
+    }
+
     socket.join(roomId);
-    const clients = getRoomClients(roomId);
-    clients.forEach(({socketId})=>{
-      io.to(socketId).emit(ACTIONS.JOINED,{
-        clients,  
-        username,
-        socketId:socket.id
-      })
-    })
-    const currentCode = roomCodeMap.get(roomId); 
-    socket.emit(ACTIONS.CODE_CHANGE, { code: currentCode }); 
+    io.to(roomId).emit(ACTIONS.JOINED, {
+      users: getRoomUsers(roomId),
+      admin: rooms[roomId].admin,
+      username: rooms[roomId].users[socket.id].username
+    });
 
-    console.log(userSocketMap)
+    console.log(`User ${username} joined room ${roomId} with unique username ${rooms[roomId].users[socket.id].username}`);
   });
 
-// code_change
-  socket.on(ACTIONS.CODE_CHANGE,({roomId,code}:{roomId:string,code:string})=>{
-    roomCodeMap.set(roomId, code);
-    console.log("Room current code"+roomCodeMap.get(roomId))
-    socket.broadcast.to(roomId).emit(ACTIONS.CODE_CHANGE,{code})
-  })
-  
+  // Update Permission (Admin Only)
+  socket.on(ACTIONS.UPDATE_PERMISSION, ({ roomId, targetId, canExecute }: { roomId: string; targetId: string; canExecute: boolean }) => {
+    const room = rooms[roomId];
+    if (!room || room.admin !== socket.id) {
+      socket.emit(ACTIONS.ERROR, { message: "Only admin can update permissions." });
+      return;
+    }
 
-  // code_sync
-  // socket.on(ACTIONS.SYNC_CODE,({code,socketId}:{code:string,socketId:string})=>{
-  //   io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
-  // })
+    if (room.users[targetId]) {
+      room.users[targetId].canExecute = canExecute;
+      io.to(roomId).emit(ACTIONS.PERMISSION_UPDATED, {
+        users: getRoomUsers(roomId),
+      });
+    } else {
+      socket.emit(ACTIONS.ERROR, { message: "User not found in room." });
+    }
+  });
 
-  // code_run
-//   socket.on(ACTIONS.RUN_CODE, async ({ lang, code, roomId }: { lang: string, code: string, roomId: string }) => {
+  // Code Execution
+  socket.on(ACTIONS.RUN_CODE, async ({ lang, code, roomId }: { lang: string; code: string; roomId: string }) => {
+    const room = rooms[roomId];
+    if (!room || !room.users[socket.id]?.canExecute) {
+      socket.emit(ACTIONS.ERROR, { message: "You do not have permission to execute code." });
+      return;
+    }
 
-//     const version = await getVersion(lang);
-//     try {
-//       console.log('inside try')
-
-//       console.log("Payload sent to API:", {
-//         language: lang,
-//         version: version,
-//         files: [{ content: code }],
-//     });
-
-//         const response = await axios.post(API_URL || '', {
-//             language: lang,
-//             version: version,
-//             files: [{ content: code }]
-//         });
-//         console.log('code is : '+code)
-//         console.log("response is : "+response)
-
-//         const stdout = response.data.run.stdout;
-//         let stderr = response.data.run.stderr;
-//         let actualError = null;
-
-//         // Check if stderr is undefined or null
-//         if (stderr === undefined || stderr === null) {
-//             actualError = stderr;
-//         } else {
-//             // Remove 'piston' from stderr
-//             stderr = stderr.replace(/piston/g, '');
-//         }
-
-//         console.log(stdout, stderr);
-
-//         // Emit the output to the room
-//         io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
-//     } catch (error:any) {
-//         // console.error("Error executing code")
-//         console.error("Error executing code:",  error.response.data || error.message || error);
-//         // Emit an error message to the room
-//         io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
-//     }
-// })
-
-
-socket.on(ACTIONS.RUN_CODE, async ({ lang, code, roomId }: { lang: string, code: string, roomId: string }) => {
-  try {
-      // Log the received request
-      console.log("Received RUN_CODE event:", { lang, code });
-
-      // Send code execution request to the external service
-      const response = await axios.post(API_URL || '', {
-          language: lang,
-          code,
+    try {
+      const response = await axios.post(API_URL || "", {
+        language: lang,
+        code,
       });
 
       const { stdout, stderr } = response.data;
-      console.log("Code Execution Response:", { stdout, stderr });
-
-      // Emit the response back to the room
       io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
-  } catch (error: any) {
-      console.error("Error executing code:", error.message);
-      io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code" });
-  }
+    } catch (error: any) {
+      console.error("Code Execution Error:", error.message);
+      io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { error: "Error executing code." });
+    }
+  });
+
+  // Code Change
+  socket.on(ACTIONS.CODE_CHANGE, ({ roomId, code }: { roomId: string; code: string }) => {
+    socket.broadcast.to(roomId).emit(ACTIONS.CODE_CHANGE, { code });
+  });
+
+  // Disconnect
+  socket.on("disconnecting", () => {
+    const roomsToLeave = Array.from(socket.rooms);
+    roomsToLeave.forEach((roomId) => {
+      if (rooms[roomId]) {
+        const room = rooms[roomId];
+        const username = room.users[socket.id]?.username;
+        delete room.users[socket.id];
+  
+        // If admin disconnects, assign a new admin
+        if (room.admin === socket.id) {
+          const remainingUsers = Object.keys(room.users);
+          if (remainingUsers.length > 0) {
+            const newAdminSocketId = remainingUsers[0];
+            room.admin = newAdminSocketId;
+            room.users[newAdminSocketId].canExecute = true; // Grant execute permission to the new admin
+            io.to(newAdminSocketId).emit(ACTIONS.SET_ADMIN, { isAdmin: true });
+          } else {
+            // No users left in the room, delete the room
+            delete rooms[roomId];
+          }
+        }
+  
+        io.to(roomId).emit(ACTIONS.USER_LEFT, {
+          users: getRoomUsers(roomId),
+        });
+        console.log(`User ${username} left room ${roomId}`);
+      }
+    });
+  });
+  
+
+  socket.on("disconnect", () => {
+    console.log(`Socket disconnected: ${socket.id}`);
+  });
 });
 
-
-// language_change
-  socket.on(ACTIONS.LANG_CHANGE,({lang_object,roomId}:{lang_object:{},roomId:string})=>{
-    socket.broadcast.to(roomId).emit(ACTIONS.LANG_CHANGE,{lang_object})
-  })
-
-
-// disconnet
-  socket.on('disconnecting',()=>{
-  
-    
-    socket.rooms.forEach((roomId)=>{
-      const username = userSocketMap.get(socket.id);
-      socket.to(roomId).emit(ACTIONS.DISCONNECTED,{
-        socketId:socket.id,
-        username
-      })
-      socket.leave(roomId);
-    })
-    userSocketMap.delete(socket.id);
-    console.log(userSocketMap);
-  })
-
-  socket.on('disconnect',()=>{
-    console.log(socket.id,"disconnected")
-  })
-  
-
-});
-
-
+// Start Server
 const port = process.env.PORT || 3000;
-
 server.listen(port, () => {
-  console.log("server is listening on port 3000");
+  console.log(`Server listening on port ${port}`);
 });
