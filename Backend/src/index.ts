@@ -17,6 +17,7 @@ const io = new Server(server);
 interface User {
   username: string;
   canExecute: boolean;
+  canWrite: boolean; 
 }
 
 interface Room {
@@ -65,13 +66,17 @@ io.on("connection", (socket: Socket) => {
       // Create room and assign admin
       rooms[roomId] = {
         admin: socket.id,
-        users: { [socket.id]: { username, canExecute: true } },
+        users: { [socket.id]: { username, canExecute: true, canWrite: true } },  // Add canWrite
       };
       socket.emit(ACTIONS.SET_ADMIN, { isAdmin: true });
     } else {
       // Generate a unique username if needed
       let uniqueUsername = getUniqueUsername(roomId, username);
-      rooms[roomId].users[socket.id] = { username: uniqueUsername, canExecute: false };
+      rooms[roomId].users[socket.id] = { 
+        username: uniqueUsername, 
+        canExecute: false, 
+        canWrite: false  
+      };
     }
 
     socket.join(roomId);
@@ -85,7 +90,8 @@ io.on("connection", (socket: Socket) => {
   });
 
   // Update Permission (Admin Only)
-  socket.on(ACTIONS.UPDATE_PERMISSION, ({ roomId, targetId, canExecute }: { roomId: string; targetId: string; canExecute: boolean }) => {
+  socket.on(ACTIONS.RUN_UPDATE_PERMISSION, ({ roomId, targetId, canExecute }: { roomId: string; targetId: string; canExecute: boolean }) => {
+    console.log("Backend: Received run permission update request", { roomId, targetId, canExecute });
     const room = rooms[roomId];
     if (!room || room.admin !== socket.id) {
       socket.emit(ACTIONS.ERROR, { message: "Only admin can update permissions." });
@@ -94,11 +100,42 @@ io.on("connection", (socket: Socket) => {
 
     if (room.users[targetId]) {
       room.users[targetId].canExecute = canExecute;
-      io.to(roomId).emit(ACTIONS.PERMISSION_UPDATED, {
-        users: getRoomUsers(roomId),
+      const updatedUsers = getRoomUsers(roomId);
+      console.log("Backend: Emitting RUN_PERMISSION_UPDATED with data:", {
+        users: updatedUsers,
+        targetId,
+        canExecute
       });
-    } else {
-      socket.emit(ACTIONS.ERROR, { message: "User not found in room." });
+      io.to(roomId).emit(ACTIONS.RUN_PERMISSION_UPDATED, {
+        users: updatedUsers,
+        targetId,
+        canExecute,
+      });
+    }
+  });
+
+  // Add new UPDATE_WRITE_PERMISSION action handler
+  socket.on(ACTIONS.UPDATE_WRITE_PERMISSION, ({ roomId, targetId, canWrite }: { roomId: string; targetId: string; canWrite: boolean }) => {
+    console.log("Backend: Received write permission update request", { roomId, targetId, canWrite });
+    const room = rooms[roomId];
+    if (!room || room.admin !== socket.id) {
+      socket.emit(ACTIONS.ERROR, { message: "Only admin can update permissions." });
+      return;
+    }
+
+    if (room.users[targetId]) {
+      room.users[targetId].canWrite = canWrite;
+      const updatedUsers = getRoomUsers(roomId);
+      console.log("Backend: Emitting WRITE_PERMISSION_UPDATED with data:", {
+        users: updatedUsers,
+        targetId,
+        canWrite
+      });
+      io.to(roomId).emit(ACTIONS.WRITE_PERMISSION_UPDATED, {
+        users: updatedUsers,
+        targetId,
+        canWrite,
+      });
     }
   });
 
@@ -117,6 +154,7 @@ io.on("connection", (socket: Socket) => {
       });
 
       const { stdout, stderr } = response.data;
+      console.log(stdout,stderr)
       io.to(roomId).emit(ACTIONS.CODE_OUTPUT, { stdout, error: stderr });
     } catch (error: any) {
       console.error("Code Execution Error:", error.message);
@@ -126,8 +164,21 @@ io.on("connection", (socket: Socket) => {
 
   // Code Change
   socket.on(ACTIONS.CODE_CHANGE, ({ roomId, code }: { roomId: string; code: string }) => {
+    const room = rooms[roomId];
+    if (!room || !room.users[socket.id]?.canWrite) {
+      socket.emit(ACTIONS.ERROR, { message: "You do not have permission to edit code." });
+      return;
+    }
     socket.broadcast.to(roomId).emit(ACTIONS.CODE_CHANGE, { code });
   });
+
+  // Language Change
+  type lang_onj_type ={
+    label:string,value:string
+  }
+  socket.on(ACTIONS.LANG_CHANGE,({lang_object,roomId}:{lang_object:lang_onj_type,roomId:string})=>{
+    socket.broadcast.to(roomId).emit(ACTIONS.LANG_CHANGE,{lang_object})
+  })
 
   // Disconnect
   socket.on("disconnecting", () => {
@@ -145,6 +196,7 @@ io.on("connection", (socket: Socket) => {
             const newAdminSocketId = remainingUsers[0];
             room.admin = newAdminSocketId;
             room.users[newAdminSocketId].canExecute = true; // Grant execute permission to the new admin
+            room.users[newAdminSocketId].canWrite = true; 
             io.to(newAdminSocketId).emit(ACTIONS.SET_ADMIN, { isAdmin: true });
           } else {
             // No users left in the room, delete the room
@@ -154,6 +206,7 @@ io.on("connection", (socket: Socket) => {
   
         io.to(roomId).emit(ACTIONS.USER_LEFT, {
           users: getRoomUsers(roomId),
+          username:username
         });
         console.log(`User ${username} left room ${roomId}`);
       }

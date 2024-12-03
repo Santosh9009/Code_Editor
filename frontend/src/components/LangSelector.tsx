@@ -1,54 +1,108 @@
-import React,{ useEffect } from "react";
-import Select from "react-dropdown-select";
 import { useRecoilState } from "recoil";
-import { langState } from "../ store/atom";
+import { langState } from "../store/atom";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Socket } from "socket.io-client";
 import { ACTIONS } from "../utils/action";
+import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface LanguageOption {
   label: string;
   value: string;
 }
-type prop = {
-  socketRef:React.MutableRefObject<Socket | null>,
-  roomId:string
-}
 
-const LangSelector = ({socketRef,roomId}:prop) => {
-  const [selectedValue, setSelectedValue] = useRecoilState(langState);
+type LangSelectorProps = {
+  socketRef: React.MutableRefObject<Socket | null>;
+  roomId: string;
+  users: Client[];
+};
+
+type Client = {
+  socketId: string;
+  username: string;
+  canExecute: boolean;
+};
+
+export const LangSelector: React.FC<LangSelectorProps> = ({
+  socketRef,
+  roomId,
+  users,
+}) => {
+  const [selectedLanguage, setSelectedLanguage] = useRecoilState(langState);
+  const [currentUser, setCurrentUser] = useState<Client | undefined>(undefined);
 
   const languageOptions: LanguageOption[] = [
-    { label: "javaScript", value: "javascript" },
-    { label: "python", value: "python" },
-    { label: "java", value: "java" },
-    { label: "c++", value: "cpp" },
-    { label: "typescript", value: "typescript" },
-    // Add more languages as needed
+    { label: "JavaScript", value: "javascript" },
+    { label: "Python", value: "python" },
+    { label: "C++", value: "c++" },
   ];
 
-  const handleChange = (selectedOptions: LanguageOption[]) => {
-    setSelectedValue(selectedOptions[0] || null);
-    socketRef.current?.emit(ACTIONS.LANG_CHANGE,{lang_object:selectedOptions[0] || null,roomId});
+  useEffect(() => {
+    const user = users.find(
+      (user: Client) => user.socketId === socketRef.current?.id
+    );
+    setCurrentUser(user);
+  }, [users, socketRef]);
+
+  const handleLanguageChange = (value: string) => {
+    if (!currentUser?.canExecute) {
+      return; // User cannot execute
+    }
+
+    const selectedOption = languageOptions.find((lang) => lang.value === value);
+    if (selectedOption) {
+      setSelectedLanguage(selectedOption);
+      socketRef.current?.emit(ACTIONS.LANG_CHANGE, {
+        lang_object: selectedOption,
+        roomId,
+      });
+    }
   };
 
-
-  useEffect(() => {
-
-    return () => {};
-  }, [selectedValue]);
-
   return (
-    <Select
-      className="text-blue-500 transition-all duration-400 bg-white"
-      options={languageOptions}
-      labelField="label"
-      valueField="value"
-      values={selectedValue ? [selectedValue] : []}
-      onChange={handleChange}
-      backspaceDelete={false}
-      clearable={false}
-      closeOnClickInput={true}
-    />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={!currentUser?.canExecute}
+          className={`${
+            !currentUser?.canExecute
+              ? "cursor-not-allowed opacity-50"
+              : "cursor-pointer"
+          }`}
+        >
+          {selectedLanguage?.label || "Select Language"}
+          <ChevronDown />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuLabel>Programming Language</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup
+          value={selectedLanguage?.value || ""}
+          onValueChange={handleLanguageChange}
+        >
+          {languageOptions.map((option) => (
+            <DropdownMenuRadioItem
+              key={option.value}
+              value={option.value}
+              disabled={!currentUser?.canExecute}
+            >
+              {option.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

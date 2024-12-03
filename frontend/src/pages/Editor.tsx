@@ -1,30 +1,31 @@
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { Clients } from "../components/Clients";
-import logo from '../assets/code-cast-high-resolution-logo-transparent.png';
+import logo from "../assets/code-cast-high-resolution-logo-transparent.png";
 import { useEffect, useRef, useState } from "react";
 import { CodeEditor } from "../components/CodeEditor";
 import { initSocket } from "../utils/socket";
 import { Socket } from "socket.io-client";
 import { ACTIONS } from "../utils/action";
 import LangSelector from "../components/LangSelector";
-import { useRecoilState} from "recoil";
-import { langState } from "../ store/atom";
+import { useRecoilState } from "recoil";
+import { langState } from "../store/atom";
 import { Output } from "../components/Output";
 import { Spinner } from "../components/Spinner";
 import { ToastContainer, toast } from "react-toastify";
+import Sidebar from "../components/Sidebar";
+import { Button } from "@/components/ui/button";
+import SmallScreenWarning from "@/components/ SmallScreenWarning";
 
 type Client = {
   socketId: string;
   username: string;
-  canExecute:boolean;
+  canExecute: boolean;
+  canWrite: boolean;
 };
 
-
 const Editor = () => {
-  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [searchParams] = useSearchParams();
-  const userName:string = searchParams.get('username') || "";
-  const roomId:string = searchParams.get('roomId') || '';
+  const userName: string = searchParams.get("username") || "";
+  const roomId: string = searchParams.get("roomId") || "";
   const socketRef = useRef<null | Socket>(null);
   const reactnavigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
@@ -32,197 +33,208 @@ const Editor = () => {
   const [language, setlanguage] = useRecoilState(langState);
   const [output, setOutput] = useState<string>();
   const [err, setErr] = useState<string>();
-  const [loading, setLoading ]= useState(false);
-  const [admin , setAdmin ] = useState()
-  const [currentUser , setCurrentUser] = useState<Client | null>();
-
-  useEffect(()=>{
-    const init = async()=>{
-      socketRef.current = await initSocket();
-      socketRef.current.on('connect_error',(e)=> handleError(e));
-      socketRef.current.on('connect_failed',(e)=> handleError(e));
-
-  // Listing to join
-      socketRef.current.emit(ACTIONS.JOIN,{
-        roomId,
-        username:userName,
-      })
+  const [loading, setLoading] = useState(false);
+  const [admin, setAdmin] = useState<string>("");
+  const [currentUser, setCurrentUser] = useState<Client | null>(null);
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768);
 
 
-// Listening to Joined
-      socketRef.current.on(ACTIONS.JOINED,({users, admin , username})=>{
-        if(username!==userName){
-          toast.info(`${username} entered the room`,{
-            position:"top-center"
-          })
-        }else{
-          socketRef.current?.on(ACTIONS.CODE_CHANGE,({code})=>{
-            console.log(code)
-          })
-        }
-        console.log(users)
-        console.log(admin)
-        setClients(users)
-        setAdmin(admin)
-        const User = users.filter((user:Client)=>user.socketId===socketRef.current?.id)
-        setCurrentUser(User[0])
-      })
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-      // socketRef.current.on(ACTIONS.JOINED, ({ users, admin, message }) => {
-      //   setAdmin(admin)
-      //   setClients(users);
-      //   if (message) {
-      //     toast.info(message); // Show a toast notification for the user that joined
-      //   }
-      // });
-      
-
-// Listening to lang change
-      socketRef.current.on(ACTIONS.LANG_CHANGE,({lang_object})=>{
-        console.log(lang_object);
-        setlanguage(lang_object);
-      })
-
-// Listening to output
-      socketRef.current?.on(ACTIONS.CODE_OUTPUT,({stdout,error})=>{
-        setOutput(stdout)
-        setErr(error)
-        setLoading(false);
-      });
-// Listening to disconnected
-      socketRef.current?.on(ACTIONS.DISCONNECTED,({username, socketId})=>{
-        console.log(username, socketId)
-        
-        setClients((prev)=>{
-          return prev.filter(client=>client.socketId!==socketId)
-        })
-        toast.error(`${username} left the room`,{
-          position:"top-center"
-        })
-      })
+  
+  useEffect(() => {
+    if (!socketRef.current) {
+      console.log("No socket connection");
+      return;
     }
+    console.log("Setting up permission listeners in Editor");
+
+    // Set up permission update listeners
+    socketRef.current.on(ACTIONS.RUN_PERMISSION_UPDATED, ({ users, targetId, canExecute }) => {
+      console.log("Editor: Received RUN_PERMISSION_UPDATED:", { users, targetId, canExecute });
+      setClients(users);
+      
+      if (socketRef.current?.id === targetId) {
+        const updatedUser = users.find((user: Client) => user.socketId === targetId);
+        if (updatedUser) {
+          console.log("Editor: Updating current user for run permission:", updatedUser);
+          setCurrentUser(updatedUser);
+        }
+      }
+    });
+
+    socketRef.current.on(ACTIONS.WRITE_PERMISSION_UPDATED, ({ users, targetId, canWrite }) => {
+      console.log("Editor: Received WRITE_PERMISSION_UPDATED:", { users, targetId, canWrite });
+      setClients(users);
+      
+      if (socketRef.current?.id === targetId) {
+        const updatedUser = users.find((user: Client) => user.socketId === targetId);
+        if (updatedUser) {
+          console.log("Editor: Updating current user for write permission:", updatedUser);
+          setCurrentUser(updatedUser);
+        }
+      }
+    });
+
+    // Cleanup
+    return () => {
+      console.log("Cleaning up permission listeners in Editor");
+      socketRef.current?.off(ACTIONS.RUN_PERMISSION_UPDATED);
+      socketRef.current?.off(ACTIONS.WRITE_PERMISSION_UPDATED);
+    };
+  }, [socketRef, clients]); 
+
+  useEffect(() => {
+    const init = async () => {
+      socketRef.current = await initSocket();
+      
+      socketRef.current.on("connect_error", (e) => {
+        console.log("Socket connection error:", e);
+        handleError(e);
+      });
+
+      // Emit join event after socket is connected
+      socketRef.current.emit(ACTIONS.JOIN, {
+        roomId,
+        username: userName,
+      });
+
+      // Set up initial joined listener
+      socketRef.current.on(ACTIONS.JOINED, ({ users, admin, username }) => {
+        if (username !== userName) {
+          toast.info(`${username} entered the room`);
+        }
+        setClients(users);
+        setAdmin(admin);
+        const currentUser = users.find(
+          (user: Client) => user.socketId === socketRef.current?.id
+        );
+        setCurrentUser(currentUser || null);
+      });
+
+      // Code output listener
+    socketRef.current.on(ACTIONS.CODE_OUTPUT, ({ stdout, error }) => {
+      console.log("Editor: Received code output:", { stdout, error });
+      setOutput(stdout);
+      setErr(error);
+      setLoading(false);
+    });
+
+    // Language change listener
+    socketRef.current.on(ACTIONS.LANG_CHANGE, ({ lang_object }) => {
+      console.log("Editor: Received language change:", lang_object);
+      setlanguage(lang_object);
+    });
+
+      // Other existing listeners...
+    };
+
     init();
 
-    return ()=>{
-      socketRef.current?.disconnect();
-      socketRef.current?.off(ACTIONS.JOINED);
-      socketRef.current?.off(ACTIONS.RUN_CODE);
-      socketRef.current?.off(ACTIONS.CODE_OUTPUT);
-      socketRef.current?.off(ACTIONS.DISCONNECTED);
-    }
-  },[])
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current.off(ACTIONS.JOINED);
+        socketRef.current?.off(ACTIONS.CODE_OUTPUT);
+        socketRef.current?.off(ACTIONS.LANG_CHANGE);
+      }
+    };
+  }, []); // Empty dependency array for initial setup
 
-  function handleError(e:Event|Error){
-    console.log('socket error',e)
-    alert('Socket connnection failed!');
-    reactnavigate('/auth')
+
+  if (isSmallScreen) {
+    return <SmallScreenWarning />;
   }
 
-  function copyRoomId(){
-    try{
-      navigator.clipboard.writeText(roomId);
-
-      // alert('Room Id copied!')
-      toast.success("RoomId Copied!", {
-        position: "top-center"
-      });
-
-    }catch(err){
-      toast.error('could not copy Room Id', {
-        position: "top-center"
-      });
-      console.log(err)
-    }
-  }
-
-
-  function leaveRoom(){
-      reactnavigate('/auth')
+  function handleError(e: Event | Error) {
+    console.log("socket error", e);
+    alert("Socket connnection failed!");
+    reactnavigate("/auth");
   }
 
   function handleRun() {
-    if(!currentUser?.canExecute){
-      toast.error(`You are not allowed to run`,{
-        position:"top-center"
-      })
-      return;
-    }else if(codeRef.current===null || codeRef.current ===''){
-      toast.warning(`Editor is empty`,{
-        position:"top-center"
-      })
+   if (codeRef.current === null || codeRef.current === "") {
+      toast.warning(`Editor is empty`);
       return;
     }
-    
+
     const code = codeRef.current;
 
-    socketRef.current?.emit(ACTIONS.RUN_CODE, { lang:language.label ,code , roomId });
+    socketRef.current?.emit(ACTIONS.RUN_CODE, {
+      lang: language.value,
+      code,
+      roomId,
+    });
     setLoading(true);
   }
 
-
-  if(!userName || !roomId){
-    <Navigate to={'/auth'}/>
+  if (!userName || !roomId) {
+    <Navigate to={"/auth"} />;
   }
 
-
   return (
-    <div className="h-screen overflow-y-hidden">
-      <ToastContainer/>
-     <div>
-     <div className="bg-[#070707] p-4 flex justify-between items-center">
-        {/* Logo */}
-        <Link to={'/'}><img src={logo} alt="Logo" className="h-4 md:h-7" /></Link>
-        <button
-          className=" text-sm md:hidden text-white bg-[#1F75FE] rounded p-2"
-          onClick={() => setSidebarVisible(!sidebarVisible)}
-        >
-          {sidebarVisible ? 'Close' : 'Open'}
-        </button>
-        {!sidebarVisible && <div className="flex gap-3 md:gap-5">
-        <button onClick={handleRun} className="text-sm md:text-base bg-[#2F4858] px-4 py-1 rounded-sm text-[#00BFFF] hover:bg-[#12EAEA] hover:text-black transition-colors active:bg-white active:text-black active:duration-200">{loading?<Spinner/>:'RUN'}</button>
-        <LangSelector socketRef={socketRef} roomId={roomId}/>
-        </div>}
-      </div>
-      {/* <div className="h-[.03rem] w-full bg-slate-300"></div> */}
-     </div>
+    <div className="h-screen flex flex-col overflow-hidden">
+      <ToastContainer />
+      {/* Header */}
+      <div className="bg-[#070707] p-4 flex justify-between items-center">
+        <Link to={"/"}>
+          <img src={logo} alt="Logo" className="h-4 md:h-7" />
+        </Link>
 
-
-    <div className=" bg-black grid grid-cols-6">
-
-      {/* Sidebar (visible on larger screens) */}
-      <div className={`sidebar hidden md:block bg-[#1b1b23] py-6 px-4 gap-5 max-h-full border-[.03rem] border-black`}>
-        <div className="flex flex-col justify-between h-[85vh]">
-        <div className="flex overflow-hidden flex-wrap gap-5">
-          {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
-        </div>
-        <div className="flex flex-col gap-5">
-        <button onClick={copyRoomId} className="text-black bg-white rounded py-2 font-bold hover:bg-slate-400 duration-200">Copy RoomId</button>
-          <button onClick={leaveRoom} className="text-black bg-[#1098F7] rounded py-2 font-bold hover:bg-[#034694] duration-200 ">Leave</button>
-        </div>
+        <div className="flex gap-3 md:gap-5">
+          <LangSelector users={clients} socketRef={socketRef} roomId={roomId} />
+          <Button
+            onClick={handleRun}
+            disabled={!currentUser?.canExecute}
+            className={`bg-[#2F4858] text-[#00BFFF] hover:bg-[#12EAEA] hover:text-black ${
+            !currentUser?.canExecute
+              ? "cursor-not-allowed opacity-50"
+              : "cursor-pointer"
+          }`}
+          >
+            {loading ? <Spinner /> : "RUN"}
+          </Button>
         </div>
       </div>
 
-      {/* Sidebar (visible on smaller screens) */}
-      <div className={`sidebar bg-[#191920] py-6 px-4 gap-5 w-screen md:hidden flex flex-col justify-between ${sidebarVisible ? 'block' : 'hidden'}`}>
-        <div className="flex gap-5">
-          {clients && clients.map((e, i) => <Clients key={i} username={e.username} />)}
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-80 flex-shrink-0 border-r border-gray-800">
+          <Sidebar
+            socketRef={socketRef}
+            roomId={roomId}
+            clients={clients}
+            admin={admin}
+          />
         </div>
-          <div className="flex flex-col gap-3">
-          <button onClick={copyRoomId} className="text-black bg-white rounded py-2 px-2 font-bold hover:bg-slate-400 duration-200">Copy roomId</button>
-          <button onClick={leaveRoom} className="text-black bg-[#1F75FE] rounded py-2 font-bold hover:bg-[#034694] duration-200">Leave</button>
+
+        {/* Editor and Output */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1">
+            <CodeEditor
+              currentUser={currentUser || {
+                socketId: "",
+                username: "",
+                canExecute: false,
+                canWrite: false,
+              }}
+              socketRef={socketRef}
+              roomId={roomId}
+              codesync={(code) => {
+                codeRef.current = code;
+              }}
+            />
           </div>
+          <Output output={output} err={err} setOutput={setOutput} setErr={setErr} />
+        </div>
       </div>
-
-      {/* Editor */}
-      <div className="col-span-6 md:col-span-5">
-        <CodeEditor socketRef={socketRef} roomId={roomId}
-         codesync={(code) => {
-          codeRef.current = code;
-      }}
-        />
-        <Output output={output} err={err}/>
-      </div>
-    </div>
     </div>
   );
 };
